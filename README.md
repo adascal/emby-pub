@@ -171,7 +171,11 @@ ServiceKP.Plugin/
 3. User visits URL and enters code
 4. Plugin polls API for authorization
 5. Upon success, tokens are saved to configuration
-6. Tokens are automatically refreshed when needed
+6. **Tokens are automatically refreshed when needed and persisted to disk**
+   - Refresh happens transparently during API calls
+   - Refreshed tokens are automatically saved to configuration
+   - No re-authentication required after server restart
+   - Token expiry is tracked and handled gracefully
 
 ## Building from Source
 

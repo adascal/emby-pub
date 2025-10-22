@@ -1,0 +1,50 @@
+name: Build and Release
+
+on:
+  push:
+    branches: [ main, master ]
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '6.0.x'
+
+    - name: Restore dependencies
+      run: dotnet restore ServiceKP.Plugin.csproj
+
+    - name: Build
+      run: dotnet build ServiceKP.Plugin.csproj --configuration Release --no-restore
+
+    - name: Create plugin package
+      run: |
+        mkdir -p release/ServiceKP
+        cp bin/Release/net6.0/ServiceKP.Plugin.dll release/ServiceKP/
+        cd release
+        zip -r ServiceKP-Plugin.zip ServiceKP/
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: ServiceKP-Plugin
+        path: release/ServiceKP-Plugin.zip
+
+    - name: Create Release
+      if: startsWith(github.ref, 'refs/tags/v')
+      uses: softprops/action-gh-release@v1
+      with:
+        files: release/ServiceKP-Plugin.zip
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

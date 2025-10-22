@@ -26,6 +26,7 @@ namespace ServiceKP.Plugin.Api
         private string? _refreshToken;
         private DateTime _tokenExpiry;
         private readonly SemaphoreSlim _tokenRefreshLock = new(1, 1);
+        private Action<string, string, DateTime>? _onTokensRefreshed;
 
         private static readonly JsonSerializerOptions JsonOptions = new()
         {
@@ -42,6 +43,11 @@ namespace ServiceKP.Plugin.Api
             _clientId = clientId;
             _clientSecret = clientSecret;
             _cache = new SimpleCache(TimeSpan.FromMinutes(5));
+        }
+
+        public void SetTokensRefreshedCallback(Action<string, string, DateTime> callback)
+        {
+            _onTokensRefreshed = callback;
         }
 
         public void SetTokens(string accessToken, string refreshToken, DateTime expiry)
@@ -214,6 +220,10 @@ namespace ServiceKP.Plugin.Api
                 _accessToken = response.AccessToken;
                 _refreshToken = response.RefreshToken;
                 _tokenExpiry = DateTime.UtcNow.AddSeconds(response.ExpiresIn);
+
+                // Notify plugin to save refreshed tokens
+                _onTokensRefreshed?.Invoke(_accessToken, _refreshToken, _tokenExpiry);
+                _logger.Info("Access token refreshed and saved successfully");
             }
 
             return response;

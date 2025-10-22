@@ -50,6 +50,16 @@ namespace ServiceKP.Plugin
                     Configuration.ClientSecret
                 );
 
+                // Set callback to save tokens when they are refreshed
+                _apiClient.SetTokensRefreshedCallback((accessToken, refreshToken, expiry) =>
+                {
+                    Configuration.AccessToken = accessToken;
+                    Configuration.RefreshToken = refreshToken;
+                    Configuration.TokenExpiry = expiry;
+                    SaveConfiguration();
+                    _logger.Info("Refreshed tokens saved to configuration");
+                });
+
                 // Restore tokens if available
                 if (!string.IsNullOrEmpty(Configuration.AccessToken))
                 {
