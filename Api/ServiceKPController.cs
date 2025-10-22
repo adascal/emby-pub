@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MediaBrowser.Model.Logging;
@@ -16,6 +17,17 @@ namespace ServiceKP.Plugin.Api
     {
     }
 
+    [Route("/ServiceKP/Devices", "GET", Summary = "Get list of linked devices")]
+    public class GetDevicesRequest : IReturn<GetDevicesResponse>
+    {
+    }
+
+    [Route("/ServiceKP/Device/{Id}/Remove", "POST", Summary = "Remove a device")]
+    public class RemoveDeviceRequest : IReturn<RemoveDeviceResponse>
+    {
+        public string Id { get; set; } = string.Empty;
+    }
+
     public class AuthenticateResponse
     {
         public bool Success { get; set; }
@@ -27,6 +39,32 @@ namespace ServiceKP.Plugin.Api
     public class ClearAuthResponse
     {
         public bool Success { get; set; }
+    }
+
+    public class GetDevicesResponse
+    {
+        public bool Success { get; set; }
+        public string? Message { get; set; }
+        public System.Collections.Generic.List<DeviceDto>? Devices { get; set; }
+    }
+
+    public class DeviceDto
+    {
+        public string Id { get; set; } = string.Empty;
+        public string Title { get; set; } = string.Empty;
+        public string Hardware { get; set; } = string.Empty;
+        public string Software { get; set; } = string.Empty;
+        public long Created { get; set; }
+        public long Updated { get; set; }
+        public long LastSeen { get; set; }
+        public bool IsBrowser { get; set; }
+    }
+
+    public class RemoveDeviceResponse
+    {
+        public bool Success { get; set; }
+        public string? Message { get; set; }
+        public bool IsCurrent { get; set; }
     }
 
     public class ServiceKPController : IService
@@ -105,6 +143,90 @@ namespace ServiceKP.Plugin.Api
             }
 
             return new ClearAuthResponse { Success = true };
+        }
+
+        public async Task<object> Get(GetDevicesRequest request)
+        {
+            var response = new GetDevicesResponse();
+
+            try
+            {
+                var plugin = Plugin.Instance;
+                var apiClient = plugin?.GetApiClient();
+
+                if (apiClient == null)
+                {
+                    response.Success = false;
+                    response.Message = "Plugin not initialized or not authenticated";
+                    return response;
+                }
+
+                var devicesResponse = await apiClient.DevicesAsync(CancellationToken.None);
+
+                response.Success = true;
+                response.Devices = devicesResponse.Devices.Select(d => new DeviceDto
+                {
+                    Id = d.Id,
+                    Title = d.Title,
+                    Hardware = d.Hardware,
+                    Software = d.Software,
+                    Created = d.Created,
+                    Updated = d.Updated,
+                    LastSeen = d.LastSeen,
+                    IsBrowser = d.IsBrowser == 1
+                }).ToList();
+            }
+            catch (Exception ex)
+            {
+                _logger.Error($"Error fetching devices: {ex.Message}");
+                response.Success = false;
+                response.Message = $"Error: {ex.Message}";
+            }
+
+            return response;
+        }
+
+        public async Task<object> Post(RemoveDeviceRequest request)
+        {
+            var response = new RemoveDeviceResponse();
+
+            try
+            {
+                var plugin = Plugin.Instance;
+                var apiClient = plugin?.GetApiClient();
+
+                if (apiClient == null)
+                {
+                    response.Success = false;
+                    response.Message = "Plugin not initialized or not authenticated";
+                    return response;
+                }
+
+                if (string.IsNullOrEmpty(request.Id))
+                {
+                    response.Success = false;
+                    response.Message = "Device ID is required";
+                    return response;
+                }
+
+                var removeResponse = await apiClient.DeviceRemoveByIdAsync(request.Id, CancellationToken.None);
+
+                response.Success = removeResponse.Error == null;
+                response.IsCurrent = removeResponse.Current;
+                response.Message = removeResponse.Current
+                    ? "Current device removed. You will need to re-authenticate."
+                    : "Device removed successfully";
+
+                _logger.Info($"Device {request.Id} removed successfully");
+            }
+            catch (Exception ex)
+            {
+                _logger.Error($"Error removing device: {ex.Message}");
+                response.Success = false;
+                response.Message = $"Error: {ex.Message}";
+            }
+
+            return response;
         }
     }
 }

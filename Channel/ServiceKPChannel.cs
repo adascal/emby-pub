@@ -134,6 +134,13 @@ namespace ServiceKP.Plugin.Channel
                         }
                         break;
 
+                    case "yearslist":
+                        if (parts.Length > 1)
+                        {
+                            return await GetYearsList(apiClient, parts[1], cancellationToken);
+                        }
+                        break;
+
                     case "genre":
                         if (parts.Length > 2)
                         {
@@ -145,6 +152,13 @@ namespace ServiceKP.Plugin.Channel
                         if (parts.Length > 2)
                         {
                             return await GetItemsByCountry(apiClient, parts[1], parts[2], query, cancellationToken);
+                        }
+                        break;
+
+                    case "year":
+                        if (parts.Length > 2)
+                        {
+                            return await GetItemsByYear(apiClient, parts[1], parts[2], query, cancellationToken);
                         }
                         break;
 
@@ -833,6 +847,13 @@ namespace ServiceKP.Plugin.Channel
                     Name = "Browse by Country",
                     Type = ChannelItemType.Folder,
                     ImageUrl = null
+                },
+                new ChannelItemInfo
+                {
+                    Id = $"yearslist_{typeId}",
+                    Name = "Browse by Year",
+                    Type = ChannelItemType.Folder,
+                    ImageUrl = null
                 }
             };
 
@@ -893,6 +914,27 @@ namespace ServiceKP.Plugin.Channel
             };
         }
 
+        private async Task<ChannelItemResult> GetYearsList(ServiceKPApiClient apiClient, string typeId, CancellationToken cancellationToken)
+        {
+            // Generate a list of years from current year back to 1960
+            var currentYear = DateTime.Now.Year;
+            var years = Enumerable.Range(1960, currentYear - 1960 + 1).Reverse();
+
+            var items = years.Select(year => new ChannelItemInfo
+            {
+                Id = $"year_{typeId}_{year}",
+                Name = year.ToString(),
+                Type = ChannelItemType.Folder,
+                ImageUrl = null
+            }).ToList();
+
+            return new ChannelItemResult
+            {
+                Items = items,
+                TotalRecordCount = items.Count
+            };
+        }
+
         private async Task<ChannelItemResult> GetItemsByGenre(ServiceKPApiClient apiClient, string typeId, string genreId, InternalChannelItemQuery query, CancellationToken cancellationToken)
         {
             var page = (query.StartIndex ?? 0) / (query.Limit ?? 20) + 1;
@@ -915,6 +957,22 @@ namespace ServiceKP.Plugin.Channel
             var perPage = query.Limit ?? 20;
 
             var response = await apiClient.GetItemsWithFiltersAsync(typeId, null, countryId, null, page, perPage, cancellationToken);
+
+            var items = response.Items.Select(ConvertToChannelItem).ToList();
+
+            return new ChannelItemResult
+            {
+                Items = items,
+                TotalRecordCount = response.Pagination?.TotalItems ?? items.Count
+            };
+        }
+
+        private async Task<ChannelItemResult> GetItemsByYear(ServiceKPApiClient apiClient, string typeId, string year, InternalChannelItemQuery query, CancellationToken cancellationToken)
+        {
+            var page = (query.StartIndex ?? 0) / (query.Limit ?? 20) + 1;
+            var perPage = query.Limit ?? 20;
+
+            var response = await apiClient.GetItemsWithFiltersAsync(typeId, null, null, year, page, perPage, cancellationToken);
 
             var items = response.Items.Select(ConvertToChannelItem).ToList();
 

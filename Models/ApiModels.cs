@@ -67,6 +67,28 @@ namespace ServiceKP.Plugin.Models
         public string Software { get; set; } = string.Empty;
     }
 
+    public class Device
+    {
+        public string Id { get; set; } = string.Empty;
+        public string Title { get; set; } = string.Empty;
+        public string Hardware { get; set; } = string.Empty;
+        public string Software { get; set; } = string.Empty;
+        public long Created { get; set; }
+        public long Updated { get; set; }
+        public long LastSeen { get; set; }
+        public int IsBrowser { get; set; }
+    }
+
+    public class DevicesResponse : ApiResponse
+    {
+        public List<Device> Devices { get; set; } = new();
+    }
+
+    public class DeviceRemoveResponse : ApiResponse
+    {
+        public bool Current { get; set; }
+    }
+
     public class Type
     {
         public string Id { get; set; } = string.Empty;

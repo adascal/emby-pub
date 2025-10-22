@@ -236,6 +236,16 @@ namespace ServiceKP.Plugin.Api
             await PostAsync<ApiResponse>("/v1/device/notify", formData, null, cancellationToken);
         }
 
+        public Task<DevicesResponse> DevicesAsync(CancellationToken cancellationToken = default)
+        {
+            return GetAsync<DevicesResponse>("/v1/device", null, cancellationToken);
+        }
+
+        public Task<DeviceRemoveResponse> DeviceRemoveByIdAsync(string deviceId, CancellationToken cancellationToken = default)
+        {
+            return PostAsync<DeviceRemoveResponse>($"/v1/device/{deviceId}/remove", null, null, cancellationToken);
+        }
+
         // Content Methods
 
         public Task<TypesResponse> GetTypesAsync(CancellationToken cancellationToken = default)
