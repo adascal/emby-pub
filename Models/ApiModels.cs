@@ -372,4 +372,14 @@ namespace ServiceKP.Plugin.Models
     {
         public List<Channel> Channels { get; set; } = new();
     }
+
+    public class WatchingToggleResponse : ApiResponse
+    {
+        public int Watched { get; set; }
+    }
+
+    public class WatchingToggleWatchlistResponse : ApiResponse
+    {
+        public bool Watching { get; set; }
+    }
 }

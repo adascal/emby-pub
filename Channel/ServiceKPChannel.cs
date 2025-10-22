@@ -103,12 +103,48 @@ namespace ServiceKP.Plugin.Channel
                         }
                         break;
 
+                    case "all":
                     case "fresh":
                     case "hot":
                     case "popular":
                         if (parts.Length > 1)
                         {
                             return await GetItemsByCategory(apiClient, category, parts[1], query, cancellationToken);
+                        }
+                        break;
+
+                    case "filters":
+                        if (parts.Length > 1)
+                        {
+                            return await GetFilters(apiClient, parts[1], cancellationToken);
+                        }
+                        break;
+
+                    case "genreslist":
+                        if (parts.Length > 1)
+                        {
+                            return await GetGenresList(apiClient, parts[1], cancellationToken);
+                        }
+                        break;
+
+                    case "countrieslist":
+                        if (parts.Length > 1)
+                        {
+                            return await GetCountriesList(apiClient, parts[1], cancellationToken);
+                        }
+                        break;
+
+                    case "genre":
+                        if (parts.Length > 2)
+                        {
+                            return await GetItemsByGenre(apiClient, parts[1], parts[2], query, cancellationToken);
+                        }
+                        break;
+
+                    case "country":
+                        if (parts.Length > 2)
+                        {
+                            return await GetItemsByCountry(apiClient, parts[1], parts[2], query, cancellationToken);
                         }
                         break;
 
@@ -155,6 +191,13 @@ namespace ServiceKP.Plugin.Channel
                         if (parts.Length > 2)
                         {
                             return await GetSeasonEpisodes(apiClient, parts[1], parts[2], cancellationToken);
+                        }
+                        break;
+
+                    case "similar":
+                        if (parts.Length > 1)
+                        {
+                            return await GetSimilarItems(apiClient, parts[1], cancellationToken);
                         }
                         break;
                 }
@@ -255,6 +298,13 @@ namespace ServiceKP.Plugin.Channel
             {
                 new ChannelItemInfo
                 {
+                    Id = $"all_{typeId}",
+                    Name = "All",
+                    Type = ChannelItemType.Folder,
+                    ImageUrl = null
+                },
+                new ChannelItemInfo
+                {
                     Id = $"fresh_{typeId}",
                     Name = "Fresh",
                     Type = ChannelItemType.Folder,
@@ -273,6 +323,13 @@ namespace ServiceKP.Plugin.Channel
                     Name = "Popular",
                     Type = ChannelItemType.Folder,
                     ImageUrl = null
+                },
+                new ChannelItemInfo
+                {
+                    Id = $"filters_{typeId}",
+                    Name = "Filters (Genres/Countries)",
+                    Type = ChannelItemType.Folder,
+                    ImageUrl = null
                 }
             };
 
@@ -288,10 +345,27 @@ namespace ServiceKP.Plugin.Channel
             var page = (query.StartIndex ?? 0) / (query.Limit ?? 20) + 1;
             var perPage = query.Limit ?? 20;
 
+            // Determine sort order based on query or use defaults
+            string? sort = null;
+            if (query.SortDescending.HasValue && query.SortBy.HasValue)
+            {
+                var sortField = query.SortBy.Value switch
+                {
+                    ChannelItemSortField.Name => "title",
+                    ChannelItemSortField.DateCreated => "created",
+                    ChannelItemSortField.CommunityRating => "rating",
+                    _ => "updated"
+                };
+                sort = query.SortDescending.Value ? $"{sortField}-" : sortField;
+            }
+
             ItemsResponse response;
 
             switch (category)
             {
+                case "all":
+                    response = await apiClient.GetItemsAsync(typeId, page, perPage, sort, cancellationToken);
+                    break;
                 case "fresh":
                     response = await apiClient.GetFreshItemsAsync(typeId, page, perPage, cancellationToken);
                     break;
@@ -378,6 +452,33 @@ namespace ServiceKP.Plugin.Channel
 
             var items = new List<ChannelItemInfo>();
 
+            // Add trailer if available
+            if (item.Trailer != null && !string.IsNullOrEmpty(item.Trailer.Url))
+            {
+                items.Add(new ChannelItemInfo
+                {
+                    Id = $"trailer_{itemId}",
+                    Name = "Trailer",
+                    Type = ChannelItemType.Media,
+                    ContentType = ChannelMediaContentType.Trailer,
+                    MediaType = ChannelMediaType.Video,
+                    ImageUrl = item.Posters?.Medium,
+                    MediaSources = new List<MediaSourceInfo>
+                    {
+                        new MediaSourceInfo
+                        {
+                            Id = item.Trailer.Id,
+                            Path = item.Trailer.Url,
+                            Protocol = MediaProtocol.Http,
+                            Container = item.Trailer.Url.Contains(".m3u8") ? "hls" : "mp4",
+                            VideoType = VideoType.VideoFile,
+                            SupportsDirectStream = true,
+                            SupportsDirectPlay = true
+                        }
+                    }
+                });
+            }
+
             // For series, add seasons as folders
             if (item.Seasons != null && item.Seasons.Count > 0)
             {
@@ -401,6 +502,15 @@ namespace ServiceKP.Plugin.Channel
                     items.Add(ConvertVideoToChannelItem(video, item));
                 }
             }
+
+            // Add "Similar Items" folder if not a trailer
+            items.Add(new ChannelItemInfo
+            {
+                Id = $"similar_{itemId}",
+                Name = "Similar Items",
+                Type = ChannelItemType.Folder,
+                ImageUrl = null
+            });
 
             return new ChannelItemResult
             {
@@ -690,6 +800,128 @@ namespace ServiceKP.Plugin.Channel
             {
                 Items = items,
                 TotalRecordCount = items.Count
+            };
+        }
+
+        private async Task<ChannelItemResult> GetSimilarItems(ServiceKPApiClient apiClient, string itemId, CancellationToken cancellationToken)
+        {
+            var response = await apiClient.GetSimilarItemsAsync(itemId, cancellationToken);
+
+            var items = response.Items.Select(ConvertToChannelItem).ToList();
+
+            return new ChannelItemResult
+            {
+                Items = items,
+                TotalRecordCount = items.Count
+            };
+        }
+
+        private async Task<ChannelItemResult> GetFilters(ServiceKPApiClient apiClient, string typeId, CancellationToken cancellationToken)
+        {
+            var items = new List<ChannelItemInfo>
+            {
+                new ChannelItemInfo
+                {
+                    Id = $"genreslist_{typeId}",
+                    Name = "Browse by Genre",
+                    Type = ChannelItemType.Folder,
+                    ImageUrl = null
+                },
+                new ChannelItemInfo
+                {
+                    Id = $"countrieslist_{typeId}",
+                    Name = "Browse by Country",
+                    Type = ChannelItemType.Folder,
+                    ImageUrl = null
+                }
+            };
+
+            return new ChannelItemResult
+            {
+                Items = items,
+                TotalRecordCount = items.Count
+            };
+        }
+
+        private async Task<ChannelItemResult> GetGenresList(ServiceKPApiClient apiClient, string typeId, CancellationToken cancellationToken)
+        {
+            var response = await apiClient.GetGenresAsync(cancellationToken);
+
+            // Map type to genre type (movie, music, docu, tvshow)
+            var genreType = typeId switch
+            {
+                "1" or "2" or "3" => "movie", // movie, serial, 3D
+                "4" => "music", // concert
+                "5" or "6" => "docu", // documovie, docuserial
+                "7" => "tvshow", // tvshow
+                _ => "movie"
+            };
+
+            var items = response.Items
+                .Where(g => g.Type == genreType)
+                .Select(genre => new ChannelItemInfo
+                {
+                    Id = $"genre_{typeId}_{genre.Id}",
+                    Name = genre.Title,
+                    Type = ChannelItemType.Folder,
+                    ImageUrl = null
+                }).ToList();
+
+            return new ChannelItemResult
+            {
+                Items = items,
+                TotalRecordCount = items.Count
+            };
+        }
+
+        private async Task<ChannelItemResult> GetCountriesList(ServiceKPApiClient apiClient, string typeId, CancellationToken cancellationToken)
+        {
+            var response = await apiClient.GetCountriesAsync(cancellationToken);
+
+            var items = response.Items.Select(country => new ChannelItemInfo
+            {
+                Id = $"country_{typeId}_{country.Id}",
+                Name = country.Title,
+                Type = ChannelItemType.Folder,
+                ImageUrl = null
+            }).ToList();
+
+            return new ChannelItemResult
+            {
+                Items = items,
+                TotalRecordCount = items.Count
+            };
+        }
+
+        private async Task<ChannelItemResult> GetItemsByGenre(ServiceKPApiClient apiClient, string typeId, string genreId, InternalChannelItemQuery query, CancellationToken cancellationToken)
+        {
+            var page = (query.StartIndex ?? 0) / (query.Limit ?? 20) + 1;
+            var perPage = query.Limit ?? 20;
+
+            var response = await apiClient.GetItemsWithFiltersAsync(typeId, genreId, null, null, page, perPage, cancellationToken);
+
+            var items = response.Items.Select(ConvertToChannelItem).ToList();
+
+            return new ChannelItemResult
+            {
+                Items = items,
+                TotalRecordCount = response.Pagination?.TotalItems ?? items.Count
+            };
+        }
+
+        private async Task<ChannelItemResult> GetItemsByCountry(ServiceKPApiClient apiClient, string typeId, string countryId, InternalChannelItemQuery query, CancellationToken cancellationToken)
+        {
+            var page = (query.StartIndex ?? 0) / (query.Limit ?? 20) + 1;
+            var perPage = query.Limit ?? 20;
+
+            var response = await apiClient.GetItemsWithFiltersAsync(typeId, null, countryId, null, page, perPage, cancellationToken);
+
+            var items = response.Items.Select(ConvertToChannelItem).ToList();
+
+            return new ChannelItemResult
+            {
+                Items = items,
+                TotalRecordCount = response.Pagination?.TotalItems ?? items.Count
             };
         }
 

@@ -6,16 +6,26 @@ A plugin for Emby Media Server that provides access to movies, TV shows, concert
 
 - **Content Browsing**
   - Browse by type (Movies, TV Shows, Concerts, Documentaries, 3D Movies)
-  - Fresh, hot, and popular content categories
+  - Fresh, hot, and popular content categories with customizable sorting
+  - "All" category with full sorting options (rating, date, title)
   - Full season and episode navigation for TV shows
   - Collections/curated playlists
   - Live TV channels (sports events, special broadcasts)
+  - Trailers for movies and shows
+  - "Similar Items" recommendations for content discovery
+
+- **Advanced Filtering**
+  - Filter by genre (contextual to content type)
+  - Filter by country
+  - Filter by year (coming soon)
+  - Multiple filter combinations
 
 - **User Features**
   - Continue Watching - Resume shows with new episodes
   - Watch History - Track your viewing history
   - Personal Bookmarks - Access your saved content
   - Search functionality
+  - Watch status tracking (API integrated)
 
 - **Streaming Features**
   - Multiple streaming protocols (HTTP, HLS, HLS2, HLS4)
@@ -23,6 +33,12 @@ A plugin for Emby Media Server that provides access to movies, TV shows, concert
   - Subtitle support (embedded and external)
   - Multiple video quality options
   - Resume playback from last position
+  - Video stream metadata (resolution, codec)
+
+- **Performance**
+  - Smart caching of reference data (types, genres, countries)
+  - Reduced API calls for improved responsiveness
+  - Configurable cache TTL
 
 - **Authentication**
   - OAuth2 device flow authentication
@@ -70,7 +86,11 @@ Once installed and configured:
 2. Select **ServiceKP** channel
 3. Browse content by:
    - **Browse by Type**: Movies, TV Shows, Concerts, Documentaries, etc.
-     - Each type has subcategories: Fresh, Hot, Popular
+     - **All**: Browse all content with sorting options
+     - **Fresh**: Newly added content
+     - **Hot**: Trending/popular content
+     - **Popular**: All-time popular content
+     - **Filters**: Advanced filtering by genre and country
    - **Continue Watching**: Shows with new episodes you're following
    - **Collections**: Curated playlists and collections
    - **My Bookmarks**: Your saved content from ServiceKP
@@ -78,16 +98,26 @@ Once installed and configured:
    - **Watch History**: Your recent viewing history
    - **Search**: Search for specific titles
 
-4. For TV Shows:
-   - Click on a show to see seasons
-   - Click on a season to see episodes
-   - Episodes automatically show your watch progress
-   - Resume watching from where you left off
+4. Advanced Filtering:
+   - Select **Filters** under any content type
+   - Choose **Browse by Genre** to filter by genre
+   - Choose **Browse by Country** to filter by country
+   - Genres are contextual (different for movies vs. documentaries)
 
-5. Video Playback:
+5. For Movies and Shows:
+   - View **Trailer** before watching (if available)
+   - Browse **Similar Items** for recommendations
+   - For TV Shows:
+     - Click on a show to see seasons
+     - Click on a season to see episodes
+     - Episodes automatically show your watch progress
+     - Resume watching from where you left off
+
+6. Video Playback:
    - Select audio tracks during playback (if multiple available)
    - Enable/disable subtitles (if available)
    - Video quality is automatically selected based on your settings
+   - Playback position is tracked automatically
 
 ## Content Types
 

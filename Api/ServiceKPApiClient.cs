@@ -20,6 +20,7 @@ namespace ServiceKP.Plugin.Api
         private readonly string _clientId;
         private readonly string _clientSecret;
         private readonly string _baseUrl;
+        private readonly SimpleCache _cache;
 
         private string? _accessToken;
         private string? _refreshToken;
@@ -40,6 +41,7 @@ namespace ServiceKP.Plugin.Api
             _baseUrl = baseUrl;
             _clientId = clientId;
             _clientSecret = clientSecret;
+            _cache = new SimpleCache(TimeSpan.FromMinutes(5));
         }
 
         public void SetTokens(string accessToken, string refreshToken, DateTime expiry)
@@ -238,17 +240,29 @@ namespace ServiceKP.Plugin.Api
 
         public Task<TypesResponse> GetTypesAsync(CancellationToken cancellationToken = default)
         {
-            return GetAsync<TypesResponse>("/v1/types", null, cancellationToken);
+            return _cache.GetOrSetAsync(
+                "types",
+                () => GetAsync<TypesResponse>("/v1/types", null, cancellationToken),
+                TimeSpan.FromHours(1) // Types rarely change
+            );
         }
 
         public Task<GenresResponse> GetGenresAsync(CancellationToken cancellationToken = default)
         {
-            return GetAsync<GenresResponse>("/v1/genres", null, cancellationToken);
+            return _cache.GetOrSetAsync(
+                "genres",
+                () => GetAsync<GenresResponse>("/v1/genres", null, cancellationToken),
+                TimeSpan.FromHours(1) // Genres rarely change
+            );
         }
 
         public Task<CountriesResponse> GetCountriesAsync(CancellationToken cancellationToken = default)
         {
-            return GetAsync<CountriesResponse>("/v1/countries", null, cancellationToken);
+            return _cache.GetOrSetAsync(
+                "countries",
+                () => GetAsync<CountriesResponse>("/v1/countries", null, cancellationToken),
+                TimeSpan.FromHours(1) // Countries rarely change
+            );
         }
 
         public Task<ItemsResponse> GetItemsAsync(string? type = null, int page = 1, int perpage = 20, string? sort = null, CancellationToken cancellationToken = default)
@@ -317,6 +331,39 @@ namespace ServiceKP.Plugin.Api
                 queryParams["type"] = type;
 
             return GetAsync<SearchResponse>("/v1/items/search", queryParams, cancellationToken);
+        }
+
+        public Task<ItemsResponse> GetSimilarItemsAsync(string itemId, CancellationToken cancellationToken = default)
+        {
+            var queryParams = new Dictionary<string, string>
+            {
+                ["id"] = itemId
+            };
+
+            return GetAsync<ItemsResponse>("/v1/items/similar", queryParams, cancellationToken);
+        }
+
+        public Task<ItemsResponse> GetItemsWithFiltersAsync(string? type = null, string? genre = null, string? country = null, string? year = null, int page = 1, int perpage = 20, CancellationToken cancellationToken = default)
+        {
+            var queryParams = new Dictionary<string, string>
+            {
+                ["page"] = page.ToString(),
+                ["perpage"] = perpage.ToString()
+            };
+
+            if (!string.IsNullOrEmpty(type))
+                queryParams["type"] = type;
+
+            if (!string.IsNullOrEmpty(genre))
+                queryParams["genre"] = genre;
+
+            if (!string.IsNullOrEmpty(country))
+                queryParams["country"] = country;
+
+            if (!string.IsNullOrEmpty(year))
+                queryParams["year"] = year;
+
+            return GetAsync<ItemsResponse>("/v1/items", queryParams, cancellationToken);
         }
 
         public Task<ItemMediaResponse> GetItemMediaAsync(string id, CancellationToken cancellationToken = default)
@@ -416,6 +463,35 @@ namespace ServiceKP.Plugin.Api
                 queryParams["season"] = season.Value.ToString();
 
             await GetAsync<ApiResponse>("/v1/watching/marktime", queryParams, cancellationToken);
+        }
+
+        public async Task<WatchingToggleResponse> ToggleWatchedAsync(string itemId, int? video = null, int? season = null, int? status = null, CancellationToken cancellationToken = default)
+        {
+            var queryParams = new Dictionary<string, string>
+            {
+                ["id"] = itemId
+            };
+
+            if (video.HasValue)
+                queryParams["video"] = video.Value.ToString();
+
+            if (season.HasValue)
+                queryParams["season"] = season.Value.ToString();
+
+            if (status.HasValue)
+                queryParams["status"] = status.Value.ToString();
+
+            return await GetAsync<WatchingToggleResponse>("/v1/watching/toggle", queryParams, cancellationToken);
+        }
+
+        public async Task<WatchingToggleWatchlistResponse> ToggleWatchlistAsync(string itemId, CancellationToken cancellationToken = default)
+        {
+            var queryParams = new Dictionary<string, string>
+            {
+                ["id"] = itemId
+            };
+
+            return await GetAsync<WatchingToggleWatchlistResponse>("/v1/watching/togglewatchlist", queryParams, cancellationToken);
         }
     }
 }
