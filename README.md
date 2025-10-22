@@ -4,13 +4,30 @@ A plugin for Emby Media Server that provides access to movies, TV shows, concert
 
 ## Features
 
-- Browse content by type (Movies, TV Shows, Concerts, Documentaries)
-- Browse fresh, hot, and popular content
-- Search functionality
-- Personal bookmarks integration
-- Multiple streaming quality options (HTTP, HLS, HLS2, HLS4)
-- Multi-audio and subtitle support
-- OAuth2 device flow authentication
+- **Content Browsing**
+  - Browse by type (Movies, TV Shows, Concerts, Documentaries, 3D Movies)
+  - Fresh, hot, and popular content categories
+  - Full season and episode navigation for TV shows
+  - Collections/curated playlists
+  - Live TV channels (sports events, special broadcasts)
+
+- **User Features**
+  - Continue Watching - Resume shows with new episodes
+  - Watch History - Track your viewing history
+  - Personal Bookmarks - Access your saved content
+  - Search functionality
+
+- **Streaming Features**
+  - Multiple streaming protocols (HTTP, HLS, HLS2, HLS4)
+  - Multi-audio track support with language selection
+  - Subtitle support (embedded and external)
+  - Multiple video quality options
+  - Resume playback from last position
+
+- **Authentication**
+  - OAuth2 device flow authentication
+  - Automatic token refresh
+  - Secure credential management
 
 ## Installation
 
@@ -52,9 +69,25 @@ Once installed and configured:
 1. Navigate to **Channels** in your Emby interface
 2. Select **ServiceKP** channel
 3. Browse content by:
-   - **Browse by Type**: Movies, TV Shows, Concerts, etc.
+   - **Browse by Type**: Movies, TV Shows, Concerts, Documentaries, etc.
+     - Each type has subcategories: Fresh, Hot, Popular
+   - **Continue Watching**: Shows with new episodes you're following
+   - **Collections**: Curated playlists and collections
    - **My Bookmarks**: Your saved content from ServiceKP
+   - **Live TV**: Active live channels (sports events, special broadcasts)
+   - **Watch History**: Your recent viewing history
    - **Search**: Search for specific titles
+
+4. For TV Shows:
+   - Click on a show to see seasons
+   - Click on a season to see episodes
+   - Episodes automatically show your watch progress
+   - Resume watching from where you left off
+
+5. Video Playback:
+   - Select audio tracks during playback (if multiple available)
+   - Enable/disable subtitles (if available)
+   - Video quality is automatically selected based on your settings
 
 ## Content Types
 

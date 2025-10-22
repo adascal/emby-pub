@@ -308,4 +308,68 @@ namespace ServiceKP.Plugin.Models
         public List<Item> Items { get; set; } = new();
         public Pagination Pagination { get; set; } = new();
     }
+
+    public class Collection
+    {
+        public string Id { get; set; } = string.Empty;
+        public string Title { get; set; } = string.Empty;
+        public int Watchers { get; set; }
+        public int Views { get; set; }
+        public long Created { get; set; }
+        public long Updated { get; set; }
+        public Posters Posters { get; set; } = new();
+    }
+
+    public class CollectionsResponse : ApiResponse
+    {
+        public List<Collection> Items { get; set; } = new();
+        public Pagination Pagination { get; set; } = new();
+    }
+
+    public class CollectionItemsResponse : ApiResponse
+    {
+        public Collection Collection { get; set; } = new();
+        public List<Item> Items { get; set; } = new();
+    }
+
+    public class HistoryItem
+    {
+        public int Time { get; set; }
+        public int Counter { get; set; }
+        public long FirstSeen { get; set; }
+        public long LastSeen { get; set; }
+        public Item Item { get; set; } = new();
+        public Video Media { get; set; } = new();
+    }
+
+    public class HistoryResponse : ApiResponse
+    {
+        public List<HistoryItem> History { get; set; } = new();
+        public Pagination Pagination { get; set; } = new();
+    }
+
+    public class WatchingItemsResponse : ApiResponse
+    {
+        public List<Item> Items { get; set; } = new();
+    }
+
+    public class ChannelLogos
+    {
+        public string S { get; set; } = string.Empty;
+        public string M { get; set; } = string.Empty;
+    }
+
+    public class Channel
+    {
+        public string Id { get; set; } = string.Empty;
+        public string Title { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public ChannelLogos? Logos { get; set; }
+        public string Stream { get; set; } = string.Empty;
+    }
+
+    public class ChannelsResponse : ApiResponse
+    {
+        public List<Channel> Channels { get; set; } = new();
+    }
 }

@@ -122,6 +122,25 @@ namespace ServiceKP.Plugin.Channel
                         }
                         break;
 
+                    case "collections":
+                        return await GetCollections(apiClient, query, cancellationToken);
+
+                    case "collection":
+                        if (parts.Length > 1)
+                        {
+                            return await GetCollectionItems(apiClient, parts[1], cancellationToken);
+                        }
+                        break;
+
+                    case "history":
+                        return await GetHistory(apiClient, query, cancellationToken);
+
+                    case "watching":
+                        return await GetWatchingSerials(apiClient, cancellationToken);
+
+                    case "channels":
+                        return await GetLiveTVChannels(apiClient, cancellationToken);
+
                     case "search":
                         return await SearchItems(apiClient, query, cancellationToken);
 
@@ -129,6 +148,13 @@ namespace ServiceKP.Plugin.Channel
                         if (parts.Length > 1)
                         {
                             return await GetItemDetails(apiClient, parts[1], cancellationToken);
+                        }
+                        break;
+
+                    case "season":
+                        if (parts.Length > 2)
+                        {
+                            return await GetSeasonEpisodes(apiClient, parts[1], parts[2], cancellationToken);
                         }
                         break;
                 }
@@ -155,8 +181,36 @@ namespace ServiceKP.Plugin.Channel
                 },
                 new ChannelItemInfo
                 {
+                    Id = "watching",
+                    Name = "Continue Watching",
+                    Type = ChannelItemType.Folder,
+                    ImageUrl = null
+                },
+                new ChannelItemInfo
+                {
+                    Id = "collections",
+                    Name = "Collections",
+                    Type = ChannelItemType.Folder,
+                    ImageUrl = null
+                },
+                new ChannelItemInfo
+                {
                     Id = "bookmarks",
                     Name = "My Bookmarks",
+                    Type = ChannelItemType.Folder,
+                    ImageUrl = null
+                },
+                new ChannelItemInfo
+                {
+                    Id = "channels",
+                    Name = "Live TV",
+                    Type = ChannelItemType.Folder,
+                    ImageUrl = null
+                },
+                new ChannelItemInfo
+                {
+                    Id = "history",
+                    Name = "Watch History",
                     Type = ChannelItemType.Folder,
                     ImageUrl = null
                 },
@@ -403,7 +457,7 @@ namespace ServiceKP.Plugin.Channel
 
                     if (!string.IsNullOrEmpty(preferredUrl))
                     {
-                        mediaSource.Add(new MediaSourceInfo
+                        var source = new MediaSourceInfo
                         {
                             Id = video.Id,
                             Path = preferredUrl,
@@ -411,13 +465,71 @@ namespace ServiceKP.Plugin.Channel
                             Container = preferredUrl.Contains(".m3u8") ? "hls" : "mp4",
                             VideoType = VideoType.VideoFile,
                             SupportsDirectStream = true,
-                            SupportsDirectPlay = true
-                        });
+                            SupportsDirectPlay = true,
+                            VideoStream = new MediaStream
+                            {
+                                Type = MediaStreamType.Video,
+                                Width = file.W,
+                                Height = file.H,
+                                Codec = file.Codec,
+                                IsInterlaced = false
+                            }
+                        };
+
+                        // Add audio streams
+                        if (video.Audios != null && video.Audios.Count > 0)
+                        {
+                            source.MediaStreams = new List<MediaStream>();
+                            source.MediaStreams.Add(source.VideoStream);
+
+                            for (int i = 0; i < video.Audios.Count; i++)
+                            {
+                                var audio = video.Audios[i];
+                                var audioStream = new MediaStream
+                                {
+                                    Type = MediaStreamType.Audio,
+                                    Index = i + 1,
+                                    Codec = audio.Codec,
+                                    Language = audio.Lang,
+                                    Channels = audio.Channels,
+                                    Title = audio.Type?.Title ?? audio.Lang
+                                };
+                                source.MediaStreams.Add(audioStream);
+                            }
+
+                            // Add subtitle streams
+                            if (video.Subtitles != null && video.Subtitles.Count > 0)
+                            {
+                                int subtitleIndex = video.Audios.Count + 1;
+                                foreach (var subtitle in video.Subtitles)
+                                {
+                                    var subStream = new MediaStream
+                                    {
+                                        Type = MediaStreamType.Subtitle,
+                                        Index = subtitleIndex++,
+                                        Language = subtitle.Lang,
+                                        IsExternal = !subtitle.Embed,
+                                        IsForced = subtitle.Forced,
+                                        Path = subtitle.Url,
+                                        Title = subtitle.Lang
+                                    };
+                                    source.MediaStreams.Add(subStream);
+                                }
+                            }
+                        }
+
+                        // Set resume position if available
+                        if (video.Watching?.Time > 0)
+                        {
+                            source.RunTimeTicks = TimeSpan.FromSeconds(video.Duration).Ticks;
+                        }
+
+                        mediaSource.Add(source);
                     }
                 }
             }
 
-            return new ChannelItemInfo
+            var channelItem = new ChannelItemInfo
             {
                 Id = $"video_{video.Id}",
                 Name = video.Title,
@@ -427,6 +539,157 @@ namespace ServiceKP.Plugin.Channel
                 ImageUrl = !string.IsNullOrEmpty(video.Thumbnail) ? video.Thumbnail : parentItem.Posters?.Medium,
                 RunTimeTicks = TimeSpan.FromSeconds(video.Duration).Ticks,
                 MediaSources = mediaSource
+            };
+
+            // Set date added from parent
+            if (parentItem.CreatedAt > 0)
+            {
+                channelItem.DateCreated = DateTimeOffset.FromUnixTimeSeconds(parentItem.CreatedAt).DateTime;
+            }
+
+            return channelItem;
+        }
+
+        private async Task<ChannelItemResult> GetSeasonEpisodes(ServiceKPApiClient apiClient, string itemId, string seasonId, CancellationToken cancellationToken)
+        {
+            var response = await apiClient.GetItemMediaAsync(itemId, cancellationToken);
+            var item = response.Item;
+
+            var items = new List<ChannelItemInfo>();
+
+            if (item.Seasons != null)
+            {
+                var season = item.Seasons.FirstOrDefault(s => s.Id == seasonId);
+                if (season?.Episodes != null)
+                {
+                    foreach (var episode in season.Episodes)
+                    {
+                        var channelItem = ConvertVideoToChannelItem(episode, item);
+                        channelItem.ContentType = ChannelMediaContentType.Episode;
+                        channelItem.IndexNumber = episode.Number;
+                        channelItem.ParentIndexNumber = season.Number;
+                        items.Add(channelItem);
+                    }
+                }
+            }
+
+            return new ChannelItemResult
+            {
+                Items = items,
+                TotalRecordCount = items.Count
+            };
+        }
+
+        private async Task<ChannelItemResult> GetCollections(ServiceKPApiClient apiClient, InternalChannelItemQuery query, CancellationToken cancellationToken)
+        {
+            var page = (query.StartIndex ?? 0) / (query.Limit ?? 20) + 1;
+            var perPage = query.Limit ?? 20;
+
+            var response = await apiClient.GetCollectionsAsync(page, perPage, cancellationToken);
+
+            var items = response.Items.Select(collection => new ChannelItemInfo
+            {
+                Id = $"collection_{collection.Id}",
+                Name = collection.Title,
+                Type = ChannelItemType.Folder,
+                ImageUrl = collection.Posters?.Medium,
+                Overview = $"Views: {collection.Views}, Watchers: {collection.Watchers}"
+            }).ToList();
+
+            return new ChannelItemResult
+            {
+                Items = items,
+                TotalRecordCount = response.Pagination?.TotalItems ?? items.Count
+            };
+        }
+
+        private async Task<ChannelItemResult> GetCollectionItems(ServiceKPApiClient apiClient, string collectionId, CancellationToken cancellationToken)
+        {
+            var response = await apiClient.GetCollectionItemsAsync(collectionId, cancellationToken);
+
+            var items = response.Items.Select(ConvertToChannelItem).ToList();
+
+            return new ChannelItemResult
+            {
+                Items = items,
+                TotalRecordCount = items.Count
+            };
+        }
+
+        private async Task<ChannelItemResult> GetHistory(ServiceKPApiClient apiClient, InternalChannelItemQuery query, CancellationToken cancellationToken)
+        {
+            var page = (query.StartIndex ?? 0) / (query.Limit ?? 20) + 1;
+            var perPage = query.Limit ?? 20;
+
+            var response = await apiClient.GetHistoryAsync(page, perPage, cancellationToken);
+
+            var items = response.History.Select(historyItem =>
+            {
+                var channelItem = ConvertToChannelItem(historyItem.Item);
+                channelItem.Name = $"{historyItem.Item.Title} - {historyItem.Media.Title}";
+                return channelItem;
+            }).ToList();
+
+            return new ChannelItemResult
+            {
+                Items = items,
+                TotalRecordCount = response.Pagination?.TotalItems ?? items.Count
+            };
+        }
+
+        private async Task<ChannelItemResult> GetWatchingSerials(ServiceKPApiClient apiClient, CancellationToken cancellationToken)
+        {
+            var response = await apiClient.GetWatchingSerialsAsync(cancellationToken);
+
+            var items = response.Items.Select(item =>
+            {
+                var channelItem = ConvertToChannelItem(item);
+                if (item.New > 0)
+                {
+                    channelItem.Name = $"{item.Title} ({item.New} new)";
+                }
+                return channelItem;
+            }).ToList();
+
+            return new ChannelItemResult
+            {
+                Items = items,
+                TotalRecordCount = items.Count
+            };
+        }
+
+        private async Task<ChannelItemResult> GetLiveTVChannels(ServiceKPApiClient apiClient, CancellationToken cancellationToken)
+        {
+            var response = await apiClient.GetChannelsAsync(cancellationToken);
+
+            var items = response.Channels.Select(channel => new ChannelItemInfo
+            {
+                Id = $"channel_{channel.Id}",
+                Name = channel.Title,
+                Type = ChannelItemType.Media,
+                ContentType = ChannelMediaContentType.Movie,
+                MediaType = ChannelMediaType.Video,
+                ImageUrl = channel.Logos?.M,
+                MediaSources = new List<MediaSourceInfo>
+                {
+                    new MediaSourceInfo
+                    {
+                        Id = channel.Id,
+                        Path = channel.Stream,
+                        Protocol = MediaProtocol.Http,
+                        Container = channel.Stream.Contains(".m3u8") ? "hls" : "mp4",
+                        VideoType = VideoType.VideoFile,
+                        SupportsDirectStream = true,
+                        SupportsDirectPlay = true,
+                        IsInfiniteStream = true
+                    }
+                }
+            }).ToList();
+
+            return new ChannelItemResult
+            {
+                Items = items,
+                TotalRecordCount = items.Count
             };
         }
 

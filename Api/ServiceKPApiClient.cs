@@ -354,5 +354,68 @@ namespace ServiceKP.Plugin.Api
 
             return GetAsync<BookmarkItemsResponse>($"/v1/bookmarks/{bookmarkId}", queryParams, cancellationToken);
         }
+
+        public Task<CollectionsResponse> GetCollectionsAsync(int page = 1, int perpage = 20, CancellationToken cancellationToken = default)
+        {
+            var queryParams = new Dictionary<string, string>
+            {
+                ["page"] = page.ToString(),
+                ["perpage"] = perpage.ToString(),
+                ["sort"] = "updated-"
+            };
+
+            return GetAsync<CollectionsResponse>("/v1/collections", queryParams, cancellationToken);
+        }
+
+        public Task<CollectionItemsResponse> GetCollectionItemsAsync(string collectionId, CancellationToken cancellationToken = default)
+        {
+            var queryParams = new Dictionary<string, string>
+            {
+                ["id"] = collectionId
+            };
+
+            return GetAsync<CollectionItemsResponse>("/v1/collections/view", queryParams, cancellationToken);
+        }
+
+        public Task<HistoryResponse> GetHistoryAsync(int page = 1, int perpage = 20, CancellationToken cancellationToken = default)
+        {
+            var queryParams = new Dictionary<string, string>
+            {
+                ["page"] = page.ToString(),
+                ["perpage"] = perpage.ToString()
+            };
+
+            return GetAsync<HistoryResponse>("/v1/history", queryParams, cancellationToken);
+        }
+
+        public Task<WatchingItemsResponse> GetWatchingSerialsAsync(CancellationToken cancellationToken = default)
+        {
+            var queryParams = new Dictionary<string, string>
+            {
+                ["subscribed"] = "0"
+            };
+
+            return GetAsync<WatchingItemsResponse>("/v1/watching/serials", queryParams, cancellationToken);
+        }
+
+        public Task<ChannelsResponse> GetChannelsAsync(CancellationToken cancellationToken = default)
+        {
+            return GetAsync<ChannelsResponse>("/v1/tv", null, cancellationToken);
+        }
+
+        public async Task MarkWatchTimeAsync(string itemId, int time, int video, int? season = null, CancellationToken cancellationToken = default)
+        {
+            var queryParams = new Dictionary<string, string>
+            {
+                ["id"] = itemId,
+                ["time"] = time.ToString(),
+                ["video"] = video.ToString()
+            };
+
+            if (season.HasValue)
+                queryParams["season"] = season.Value.ToString();
+
+            await GetAsync<ApiResponse>("/v1/watching/marktime", queryParams, cancellationToken);
+        }
     }
 }
