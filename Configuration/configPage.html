@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ServiceKP Plugin Configuration</title>
+</head>
+<body>
+    <div data-role="page" class="page type-interior pluginConfigurationPage" data-require="emby-input,emby-button,emby-select,emby-checkbox">
+        <div data-role="content">
+            <div class="content-primary">
+                <form class="serviceKPConfigForm">
+                    <div class="verticalSection">
+                        <h2>ServiceKP Plugin Configuration</h2>
+
+                        <div class="sectionTitleContainer">
+                            <h3 class="sectionTitle">API Settings</h3>
+                        </div>
+
+                        <div class="inputContainer">
+                            <label class="inputLabel" for="txtApiBaseUrl">API Base URL:</label>
+                            <input is="emby-input" type="text" id="txtApiBaseUrl" name="txtApiBaseUrl" />
+                            <div class="fieldDescription">The base URL for the ServiceKP API</div>
+                        </div>
+
+                        <div class="inputContainer">
+                            <label class="inputLabel" for="txtClientId">Client ID:</label>
+                            <input is="emby-input" type="text" id="txtClientId" name="txtClientId" />
+                            <div class="fieldDescription">API Client ID</div>
+                        </div>
+
+                        <div class="inputContainer">
+                            <label class="inputLabel" for="txtClientSecret">Client Secret:</label>
+                            <input is="emby-input" type="password" id="txtClientSecret" name="txtClientSecret" />
+                            <div class="fieldDescription">API Client Secret</div>
+                        </div>
+
+                        <div class="sectionTitleContainer">
+                            <h3 class="sectionTitle">Streaming Settings</h3>
+                        </div>
+
+                        <div class="selectContainer">
+                            <label class="selectLabel" for="selectStreamingType">Preferred Streaming Type:</label>
+                            <select is="emby-select" id="selectStreamingType" name="selectStreamingType">
+                                <option value="http">HTTP</option>
+                                <option value="hls">HLS</option>
+                                <option value="hls2">HLS2</option>
+                                <option value="hls4">HLS4</option>
+                            </select>
+                            <div class="fieldDescription">Select your preferred streaming protocol</div>
+                        </div>
+
+                        <div class="inputContainer">
+                            <label class="inputLabel" for="txtDefaultItemsPerPage">Items Per Page:</label>
+                            <input is="emby-input" type="number" id="txtDefaultItemsPerPage" name="txtDefaultItemsPerPage" min="10" max="100" />
+                            <div class="fieldDescription">Number of items to load per page (10-100)</div>
+                        </div>
+
+                        <div class="checkboxContainer checkboxContainer-withDescription">
+                            <label>
+                                <input is="emby-checkbox" type="checkbox" id="chkEnableAdultContent" name="chkEnableAdultContent" />
+                                <span>Enable Adult Content</span>
+                            </label>
+                            <div class="fieldDescription checkboxFieldDescription">Allow adult/erotic content to be displayed</div>
+                        </div>
+
+                        <div class="sectionTitleContainer">
+                            <h3 class="sectionTitle">Authentication</h3>
+                        </div>
+
+                        <div class="inputContainer">
+                            <button is="emby-button" type="button" class="raised button-submit" id="btnAuthenticate">
+                                <span>Authenticate</span>
+                            </button>
+                            <button is="emby-button" type="button" class="raised" id="btnClearAuth">
+                                <span>Clear Authentication</span>
+                            </button>
+                            <div class="fieldDescription">Authenticate with ServiceKP to access content</div>
+                        </div>
+
+                        <div id="authStatus" style="margin-top: 1em;"></div>
+
+                        <br />
+                        <button is="emby-button" type="submit" class="raised button-submit">
+                            <span>Save</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <script type="text/javascript">
+            var ServiceKPConfig = {
+                pluginUniqueId: '12345678-1234-1234-1234-123456789abc'
+            };
+
+            document.querySelector('.serviceKPConfigForm').addEventListener('submit', function (e) {
+                e.preventDefault();
+                Dashboard.showLoadingMsg();
+
+                var form = this;
+
+                ApiClient.getPluginConfiguration(ServiceKPConfig.pluginUniqueId).then(function (config) {
+                    config.ApiBaseUrl = form.querySelector('#txtApiBaseUrl').value;
+                    config.ClientId = form.querySelector('#txtClientId').value;
+                    config.ClientSecret = form.querySelector('#txtClientSecret').value;
+                    config.PreferredStreamingType = form.querySelector('#selectStreamingType').value;
+                    config.DefaultItemsPerPage = parseInt(form.querySelector('#txtDefaultItemsPerPage').value);
+                    config.EnableAdultContent = form.querySelector('#chkEnableAdultContent').checked;
+
+                    ApiClient.updatePluginConfiguration(ServiceKPConfig.pluginUniqueId, config).then(function (result) {
+                        Dashboard.processPluginConfigurationUpdateResult(result);
+                    });
+                });
+
+                return false;
+            });
+
+            document.querySelector('#btnAuthenticate').addEventListener('click', function () {
+                var statusDiv = document.querySelector('#authStatus');
+                statusDiv.innerHTML = '<p>Please check the Emby server logs for authentication instructions...</p>';
+
+                ApiClient.getJSON(ApiClient.getUrl('ServiceKP/Authenticate')).then(function (result) {
+                    if (result.Success) {
+                        statusDiv.innerHTML = '<p style="color: green;">Authentication successful!</p>';
+                    } else {
+                        statusDiv.innerHTML = '<p style="color: red;">Authentication failed. Check logs for details.</p>';
+                    }
+                }).catch(function (err) {
+                    statusDiv.innerHTML = '<p style="color: red;">Error: ' + err.message + '</p>';
+                });
+            });
+
+            document.querySelector('#btnClearAuth').addEventListener('click', function () {
+                ApiClient.getJSON(ApiClient.getUrl('ServiceKP/ClearAuth')).then(function () {
+                    document.querySelector('#authStatus').innerHTML = '<p>Authentication cleared.</p>';
+                });
+            });
+
+            ApiClient.getPluginConfiguration(ServiceKPConfig.pluginUniqueId).then(function (config) {
+                var form = document.querySelector('.serviceKPConfigForm');
+                form.querySelector('#txtApiBaseUrl').value = config.ApiBaseUrl || '';
+                form.querySelector('#txtClientId').value = config.ClientId || '';
+                form.querySelector('#txtClientSecret').value = config.ClientSecret || '';
+                form.querySelector('#selectStreamingType').value = config.PreferredStreamingType || 'http';
+                form.querySelector('#txtDefaultItemsPerPage').value = config.DefaultItemsPerPage || 20;
+                form.querySelector('#chkEnableAdultContent').checked = config.EnableAdultContent || false;
+
+                if (config.AccessToken) {
+                    document.querySelector('#authStatus').innerHTML = '<p style="color: green;">Authenticated</p>';
+                } else {
+                    document.querySelector('#authStatus').innerHTML = '<p style="color: orange;">Not authenticated</p>';
+                }
+            });
+        </script>
+    </div>
+</body>
+</html>
