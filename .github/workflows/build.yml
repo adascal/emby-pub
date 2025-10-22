@@ -14,10 +14,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Setup .NET
-      uses: actions/setup-dotnet@v3
+      uses: actions/setup-dotnet@v4
       with:
         dotnet-version: '6.0.x'
 
@@ -35,7 +35,7 @@ jobs:
         zip -r ServiceKP-Plugin.zip ServiceKP/
 
     - name: Upload build artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: ServiceKP-Plugin
         path: release/ServiceKP-Plugin.zip
