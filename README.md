@@ -1,6 +1,6 @@
-# ServiceKP Plugin for Emby
+# Kinopub Plugin for Emby
 
-A plugin for Emby Media Server that provides access to movies, TV shows, concerts, and documentaries from ServiceKP.
+A plugin for Emby Media Server that provides access to movies, TV shows, concerts, and documentaries from Kinopub.
 
 ## Features
 
@@ -49,7 +49,7 @@ A plugin for Emby Media Server that provides access to movies, TV shows, concert
 
 1. Build the plugin:
    ```bash
-   dotnet build ServiceKP.Plugin.csproj -c Release
+   dotnet build Kinopub.Plugin.csproj -c Release
    ```
 
 2. Copy the compiled DLL to your Emby plugins directory:
@@ -61,7 +61,7 @@ A plugin for Emby Media Server that provides access to movies, TV shows, concert
 
 ## Configuration
 
-1. Navigate to **Emby Dashboard** > **Plugins** > **ServiceKP**
+1. Navigate to **Emby Dashboard** > **Plugins** > **Kinopub**
 
 2. Configure the following settings:
    - **API Base URL**: Default is `https://api.service-kp.com`
@@ -71,7 +71,7 @@ A plugin for Emby Media Server that provides access to movies, TV shows, concert
    - **Items Per Page**: Number of items to load per page (10-100)
    - **Enable Adult Content**: Toggle adult content visibility
 
-3. Click **Authenticate** to link your ServiceKP account:
+3. Click **Authenticate** to link your Kinopub account:
    - Check your Emby server logs for the device code
    - Visit the verification URL shown in the logs
    - Enter the device code to authorize
@@ -83,7 +83,7 @@ A plugin for Emby Media Server that provides access to movies, TV shows, concert
 Once installed and configured:
 
 1. Navigate to **Channels** in your Emby interface
-2. Select **ServiceKP** channel
+2. Select **Kinopub** channel
 3. Browse content by:
    - **Browse by Type**: Movies, TV Shows, Concerts, Documentaries, etc.
      - **All**: Browse all content with sorting options
@@ -93,7 +93,7 @@ Once installed and configured:
      - **Filters**: Advanced filtering by genre and country
    - **Continue Watching**: Shows with new episodes you're following
    - **Collections**: Curated playlists and collections
-   - **My Bookmarks**: Your saved content from ServiceKP
+   - **My Bookmarks**: Your saved content from Kinopub
    - **Live TV**: Active live channels (sports events, special broadcasts)
    - **Watch History**: Your recent viewing history
    - **Search**: Search for specific titles
@@ -131,7 +131,7 @@ Once installed and configured:
 
 ## API Integration
 
-This plugin integrates with the ServiceKP API, providing:
+This plugin integrates with the Kinopub API, providing:
 
 - Device authentication via OAuth2
 - Content browsing and filtering
@@ -150,18 +150,18 @@ This plugin integrates with the ServiceKP API, providing:
 ### Project Structure
 
 ```
-ServiceKP.Plugin/
+Kinopub.Plugin/
 ├── Api/
-│   └── ServiceKPApiClient.cs      # API client implementation
+│   └── KinopubApiClient.cs      # API client implementation
 ├── Channel/
-│   └── ServiceKPChannel.cs        # Channel implementation
+│   └── KinopubChannel.cs        # Channel implementation
 ├── Configuration/
 │   ├── configPage.html           # Configuration UI
 │   └── PluginConfiguration.cs    # Configuration model
 ├── Models/
 │   └── ApiModels.cs              # API response models
 ├── Plugin.cs                      # Main plugin entry point
-└── ServiceKP.Plugin.csproj       # Project file
+└── Kinopub.Plugin.csproj       # Project file
 ```
 
 ### Authentication Flow
@@ -185,7 +185,7 @@ git clone <repository-url>
 cd emby-pub
 
 # Build the plugin
-dotnet build ServiceKP.Plugin.csproj -c Release
+dotnet build Kinopub.Plugin.csproj -c Release
 
 # Output will be in bin/Release/net6.0/
 ```
@@ -223,4 +223,4 @@ For issues and feature requests, please check the Emby server logs and ensure:
 
 ## Credits
 
-Developed for Emby Media Server to provide ServiceKP content integration.
+Developed for Emby Media Server to provide Kinopub content integration.

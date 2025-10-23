@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>ServiceKP Plugin Configuration</title>
+    <title>Kinopub Plugin Configuration</title>
     <style>
         /* Force dark background for modal and page */
         html,
@@ -127,7 +127,7 @@
             <div class="content-primary">
                 <form class="serviceKPConfigForm">
                     <div class="verticalSection">
-                        <h2>ServiceKP Plugin Configuration</h2>
+                        <h2>Kinopub Plugin Configuration</h2>
 
                         <div class="sectionTitleContainer">
                             <h3 class="sectionTitle">API Settings</h3>
@@ -136,7 +136,7 @@
                         <div class="inputContainer">
                             <label class="inputLabel" for="txtApiBaseUrl">API Base URL:</label>
                             <input is="emby-input" type="text" id="txtApiBaseUrl" name="txtApiBaseUrl" />
-                            <div class="fieldDescription">The base URL for the ServiceKP API</div>
+                            <div class="fieldDescription">The base URL for the Kinopub API</div>
                         </div>
 
                         <div class="inputContainer">
@@ -191,7 +191,7 @@
                             <button is="emby-button" type="button" class="raised" id="btnClearAuth">
                                 <span>Clear Authentication</span>
                             </button>
-                            <div class="fieldDescription">Authenticate with ServiceKP to access content</div>
+                            <div class="fieldDescription">Authenticate with Kinopub to access content</div>
                         </div>
 
                         <div id="authStatus" style="margin-top: 1em;"></div>
@@ -206,14 +206,14 @@
         </div>
 
         <script type="text/javascript">
-            var ServiceKPConfig = {
+            var KinopubConfig = {
                 pluginUniqueId: '12345678-1234-1234-1234-123456789abc',
                 pollInterval: null,
 
                 loadConfiguration: function() {
-                    console.log('Loading ServiceKP configuration...');
+                    console.log('Loading Kinopub configuration...');
 
-                    ApiClient.getPluginConfiguration(ServiceKPConfig.pluginUniqueId).then(function (config) {
+                    ApiClient.getPluginConfiguration(KinopubConfig.pluginUniqueId).then(function (config) {
                         console.log('Configuration loaded:', config);
 
                         var form = document.querySelector('.serviceKPConfigForm');
@@ -231,7 +231,7 @@
                         form.querySelector('#txtDefaultItemsPerPage').value = config.DefaultItemsPerPage || 20;
                         form.querySelector('#chkEnableAdultContent').checked = config.EnableAdultContent || false;
 
-                        ServiceKPConfig.updateAuthStatus(config);
+                        KinopubConfig.updateAuthStatus(config);
                     }).catch(function(err) {
                         console.error('Error loading configuration:', err);
                     });
@@ -240,7 +240,7 @@
                 updateAuthStatus: function(config) {
                     var statusDiv = document.querySelector('#authStatus');
                     if (config.AccessToken && config.AccessToken.length > 0) {
-                        statusDiv.innerHTML = '<p style="color: #00ff00;">✓ Authenticated with ServiceKP</p>';
+                        statusDiv.innerHTML = '<p style="color: #00ff00;">✓ Authenticated with Kinopub</p>';
                     } else {
                         statusDiv.innerHTML = '<p style="color: #ff9900;">⚠ Not authenticated - Click "Authenticate" button</p>';
                     }
@@ -253,9 +253,9 @@
                     btnAuth.disabled = true;
                     statusDiv.innerHTML = '<p>⏳ Starting authentication...</p>';
 
-                    console.log('Calling ServiceKP/Authenticate endpoint...');
+                    console.log('Calling Kinopub/Authenticate endpoint...');
 
-                    ApiClient.getJSON(ApiClient.getUrl('ServiceKP/Authenticate')).then(function (result) {
+                    ApiClient.getJSON(ApiClient.getUrl('Kinopub/Authenticate')).then(function (result) {
                         console.log('Auth response:', result);
 
                         if (result.Success && result.UserCode) {
@@ -269,7 +269,7 @@
                                 '</div>';
 
                             // Start polling for auth completion
-                            ServiceKPConfig.startPolling();
+                            KinopubConfig.startPolling();
                         } else {
                             statusDiv.innerHTML = '<p style="color: red;">❌ ' + (result.Message || 'Authentication failed') + '</p>';
                             btnAuth.disabled = false;
@@ -284,23 +284,23 @@
                 startPolling: function() {
                     console.log('Starting authentication polling...');
 
-                    if (ServiceKPConfig.pollInterval) {
-                        clearInterval(ServiceKPConfig.pollInterval);
+                    if (KinopubConfig.pollInterval) {
+                        clearInterval(KinopubConfig.pollInterval);
                     }
 
-                    ServiceKPConfig.pollInterval = setInterval(function() {
-                        ApiClient.getPluginConfiguration(ServiceKPConfig.pluginUniqueId).then(function(config) {
+                    KinopubConfig.pollInterval = setInterval(function() {
+                        ApiClient.getPluginConfiguration(KinopubConfig.pluginUniqueId).then(function(config) {
                             if (config.AccessToken && config.AccessToken.length > 0) {
                                 console.log('Authentication completed!');
-                                clearInterval(ServiceKPConfig.pollInterval);
-                                ServiceKPConfig.pollInterval = null;
+                                clearInterval(KinopubConfig.pollInterval);
+                                KinopubConfig.pollInterval = null;
 
                                 var statusDiv = document.querySelector('#authStatus');
                                 statusDiv.innerHTML = '<p style="color: #00ff00;">✓ Authentication successful!</p>';
 
                                 document.querySelector('#btnAuthenticate').disabled = false;
 
-                                Dashboard.alert('Successfully authenticated with ServiceKP!');
+                                Dashboard.alert('Successfully authenticated with Kinopub!');
                             }
                         });
                     }, 3000); // Poll every 3 seconds
@@ -311,7 +311,7 @@
                         return;
                     }
 
-                    ApiClient.getJSON(ApiClient.getUrl('ServiceKP/ClearAuth')).then(function (result) {
+                    ApiClient.getJSON(ApiClient.getUrl('Kinopub/ClearAuth')).then(function (result) {
                         var statusDiv = document.querySelector('#authStatus');
                         if (result.Success) {
                             statusDiv.innerHTML = '<p style="color: #ff9900;">⚠ Authentication cleared</p>';
@@ -327,7 +327,7 @@
                 saveConfiguration: function(form) {
                     Dashboard.showLoadingMsg();
 
-                    ApiClient.getPluginConfiguration(ServiceKPConfig.pluginUniqueId).then(function (config) {
+                    ApiClient.getPluginConfiguration(KinopubConfig.pluginUniqueId).then(function (config) {
                         config.ApiBaseUrl = form.querySelector('#txtApiBaseUrl').value;
                         config.ClientId = form.querySelector('#txtClientId').value;
                         config.ClientSecret = form.querySelector('#txtClientSecret').value;
@@ -337,7 +337,7 @@
 
                         console.log('Saving configuration:', config);
 
-                        ApiClient.updatePluginConfiguration(ServiceKPConfig.pluginUniqueId, config).then(function (result) {
+                        ApiClient.updatePluginConfiguration(KinopubConfig.pluginUniqueId, config).then(function (result) {
                             Dashboard.hideLoadingMsg();
                             Dashboard.processPluginConfigurationUpdateResult(result);
                         }).catch(function(err) {
@@ -351,17 +351,17 @@
 
             // Initialize when DOM is ready
             document.addEventListener('DOMContentLoaded', function() {
-                console.log('ServiceKP config page loaded');
+                console.log('Kinopub config page loaded');
 
                 // Load configuration
-                ServiceKPConfig.loadConfiguration();
+                KinopubConfig.loadConfiguration();
 
                 // Setup form submit
                 var form = document.querySelector('.serviceKPConfigForm');
                 if (form) {
                     form.addEventListener('submit', function (e) {
                         e.preventDefault();
-                        ServiceKPConfig.saveConfiguration(this);
+                        KinopubConfig.saveConfiguration(this);
                         return false;
                     });
                 }
@@ -370,7 +370,7 @@
                 var btnAuth = document.querySelector('#btnAuthenticate');
                 if (btnAuth) {
                     btnAuth.addEventListener('click', function () {
-                        ServiceKPConfig.startAuthentication();
+                        KinopubConfig.startAuthentication();
                     });
                 }
 
@@ -378,7 +378,7 @@
                 var btnClearAuth = document.querySelector('#btnClearAuth');
                 if (btnClearAuth) {
                     btnClearAuth.addEventListener('click', function () {
-                        ServiceKPConfig.clearAuth();
+                        KinopubConfig.clearAuth();
                     });
                 }
             });
@@ -390,7 +390,7 @@
                 // DOM already loaded
                 setTimeout(function() {
                     if (typeof ApiClient !== 'undefined') {
-                        ServiceKPConfig.loadConfiguration();
+                        KinopubConfig.loadConfiguration();
                     }
                 }, 100);
             }
