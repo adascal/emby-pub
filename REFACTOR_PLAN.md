@@ -509,12 +509,12 @@ public class LibrarySyncTask : IScheduledTask
 **Goal**: Consistent naming throughout codebase
 
 **Deliverables**:
-- [x] Rename ServiceKP* files to Kinopub*
+- [x] Rename Kinopub* files to Kinopub*
 - [x] Update all namespace references
-- [x] Fix API routes (/ServiceKP/ → /Kinopub/)
+- [x] Fix API routes (/Kinopub/ → /Kinopub/)
 - [x] Update provider IDs
 
-**Outcome**: No "ServiceKP" references, consistent "Kinopub" branding
+**Outcome**: No "Kinopub" references, consistent "Kinopub" branding
 
 ### Phase 3: Metadata Providers ⏭️ SKIPPED
 **Goal**: Enhanced metadata from .strm filenames

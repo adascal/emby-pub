@@ -27,10 +27,10 @@
 ### ✅ Phase 2: Namespace Migration (COMMITTED - 96db8de)
 **Status**: Complete - Bulk rename and fixes
 **Changes**:
-- Renamed 7 files: ServiceKP* → Kinopub*
+- Renamed 7 files: Kinopub* → Kinopub*
 - Fixed all namespaces using sed
 - Fixed API routes and provider IDs
-- 0 ServiceKP references remaining
+- 0 Kinopub references remaining
 
 ### ⏭️ Phase 3: Metadata Provider Enhancements (SKIPPED)
 **Status**: Skipped - Existing providers work correctly

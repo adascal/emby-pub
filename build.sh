@@ -1,22 +1,22 @@
 #!/bin/bash
 
-# Build script for ServiceKP Emby Plugin
+# Build script for Kinopub Emby Plugin
 
-echo "Building ServiceKP Plugin for Emby..."
+echo "Building Kinopub Plugin for Emby..."
 
 # Clean previous builds
-dotnet clean ServiceKP.Plugin.csproj
+dotnet clean Kinopub.Plugin.csproj
 
 # Build the plugin
-dotnet build ServiceKP.Plugin.csproj -c Release
+dotnet build Kinopub.Plugin.csproj -c Release
 
 if [ $? -eq 0 ]; then
     echo ""
     echo "Build successful!"
-    echo "Plugin DLL location: bin/Release/net6.0/ServiceKP.Plugin.dll"
+    echo "Plugin DLL location: bin/Release/net6.0/Kinopub.Plugin.dll"
     echo ""
     echo "To install:"
-    echo "1. Copy bin/Release/net6.0/ServiceKP.Plugin.dll to your Emby plugins directory"
+    echo "1. Copy bin/Release/net6.0/Kinopub.Plugin.dll to your Emby plugins directory"
     echo "2. Restart Emby Server"
     echo ""
     echo "Plugin directories by platform:"

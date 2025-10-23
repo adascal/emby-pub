@@ -52,7 +52,7 @@ This permanently deleted **~9,700 lines** of uncommitted work including:
 - Build: ✅ Success
 
 #### Phase 2: Namespace Migration (Commit 96db8de)
-- Renamed 7 files: ServiceKP* → Kinopub*
+- Renamed 7 files: Kinopub* → Kinopub*
 - Fixed all namespaces with sed
 - Updated API routes and provider IDs
 - Fixed 53 remaining references
