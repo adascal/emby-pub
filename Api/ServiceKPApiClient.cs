@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Text.Json;
@@ -13,6 +14,33 @@ using ServiceKP.Plugin.Models;
 
 namespace ServiceKP.Plugin.Api
 {
+    public class SnakeCaseNamingPolicy : JsonNamingPolicy
+    {
+        public override string ConvertName(string name)
+        {
+            if (string.IsNullOrEmpty(name))
+                return name;
+
+            var result = new System.Text.StringBuilder();
+            result.Append(char.ToLowerInvariant(name[0]));
+
+            for (int i = 1; i < name.Length; i++)
+            {
+                if (char.IsUpper(name[i]))
+                {
+                    result.Append('_');
+                    result.Append(char.ToLowerInvariant(name[i]));
+                }
+                else
+                {
+                    result.Append(name[i]);
+                }
+            }
+
+            return result.ToString();
+        }
+    }
+
     public class ServiceKPApiClient
     {
         private readonly IHttpClient _httpClient;
@@ -30,7 +58,7 @@ namespace ServiceKP.Plugin.Api
 
         private static readonly JsonSerializerOptions JsonOptions = new()
         {
-            PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
+            PropertyNamingPolicy = new SnakeCaseNamingPolicy(),
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
             PropertyNameCaseInsensitive = true
         };
@@ -119,7 +147,7 @@ namespace ServiceKP.Plugin.Api
 
                 if (method == "GET")
                 {
-                    response = await _httpClient.GetResponse(new HttpRequestOptions
+                    response = await _httpClient.GetResponse(new MediaBrowser.Common.Net.HttpRequestOptions
                     {
                         Url = url,
                         CancellationToken = cancellationToken,
@@ -128,7 +156,7 @@ namespace ServiceKP.Plugin.Api
                 }
                 else // POST
                 {
-                    var requestOptions = new HttpRequestOptions
+                    var requestOptions = new MediaBrowser.Common.Net.HttpRequestOptions
                     {
                         Url = url,
                         CancellationToken = cancellationToken,
@@ -144,8 +172,9 @@ namespace ServiceKP.Plugin.Api
                 }
 
                 using (response.Content)
+                using (var reader = new StreamReader(response.Content))
                 {
-                    var json = await response.Content.ReadAsStringAsync();
+                    var json = await reader.ReadToEndAsync();
                     _logger.Debug($"API Response: {json}");
 
                     var result = JsonSerializer.Deserialize<T>(json, JsonOptions);

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MediaBrowser.Controller.Channels;
+using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Channels;
 using MediaBrowser.Model.Dto;
@@ -191,9 +192,6 @@ namespace ServiceKP.Plugin.Channel
                     case "channels":
                         return await GetLiveTVChannels(apiClient, cancellationToken);
 
-                    case "search":
-                        return await SearchItems(apiClient, query, cancellationToken);
-
                     case "item":
                         if (parts.Length > 1)
                         {
@@ -268,13 +266,6 @@ namespace ServiceKP.Plugin.Channel
                 {
                     Id = "history",
                     Name = "Watch History",
-                    Type = ChannelItemType.Folder,
-                    ImageUrl = null
-                },
-                new ChannelItemInfo
-                {
-                    Id = "search",
-                    Name = "Search",
                     Type = ChannelItemType.Folder,
                     ImageUrl = null
                 }
@@ -361,16 +352,16 @@ namespace ServiceKP.Plugin.Channel
 
             // Determine sort order based on query or use defaults
             string? sort = null;
-            if (query.SortDescending.HasValue && query.SortBy.HasValue)
+            if (query.SortBy != null)
             {
-                var sortField = query.SortBy.Value switch
+                var sortField = query.SortBy switch
                 {
                     ChannelItemSortField.Name => "title",
                     ChannelItemSortField.DateCreated => "created",
                     ChannelItemSortField.CommunityRating => "rating",
                     _ => "updated"
                 };
-                sort = query.SortDescending.Value ? $"{sortField}-" : sortField;
+                sort = query.SortDescending ? $"{sortField}-" : sortField;
             }
 
             ItemsResponse response;
@@ -438,26 +429,6 @@ namespace ServiceKP.Plugin.Channel
             };
         }
 
-        private async Task<ChannelItemResult> SearchItems(ServiceKPApiClient apiClient, InternalChannelItemQuery query, CancellationToken cancellationToken)
-        {
-            if (string.IsNullOrEmpty(query.SearchTerm))
-            {
-                return new ChannelItemResult { Items = new List<ChannelItemInfo>() };
-            }
-
-            var page = (query.StartIndex ?? 0) / (query.Limit ?? 20) + 1;
-            var perPage = query.Limit ?? 20;
-
-            var response = await apiClient.SearchItemsAsync(query.SearchTerm, null, page, perPage, cancellationToken);
-
-            var items = response.Items.Select(ConvertToChannelItem).ToList();
-
-            return new ChannelItemResult
-            {
-                Items = items,
-                TotalRecordCount = response.Pagination?.TotalItems ?? items.Count
-            };
-        }
 
         private async Task<ChannelItemResult> GetItemDetails(ServiceKPApiClient apiClient, string itemId, CancellationToken cancellationToken)
         {
@@ -485,7 +456,6 @@ namespace ServiceKP.Plugin.Channel
                             Path = item.Trailer.Url,
                             Protocol = MediaProtocol.Http,
                             Container = item.Trailer.Url.Contains(".m3u8") ? "hls" : "mp4",
-                            VideoType = VideoType.VideoFile,
                             SupportsDirectStream = true,
                             SupportsDirectPlay = true
                         }
@@ -562,7 +532,7 @@ namespace ServiceKP.Plugin.Channel
             return channelItem;
         }
 
-        private ChannelItemInfo ConvertVideoToChannelItem(Video video, ItemDetails parentItem)
+        private ChannelItemInfo ConvertVideoToChannelItem(ServiceKP.Plugin.Models.Video video, ItemDetails parentItem)
         {
             var mediaSource = new List<MediaSourceInfo>();
 
@@ -581,30 +551,30 @@ namespace ServiceKP.Plugin.Channel
 
                     if (!string.IsNullOrEmpty(preferredUrl))
                     {
+                        var videoStream = new MediaStream
+                        {
+                            Type = MediaStreamType.Video,
+                            Width = file.W,
+                            Height = file.H,
+                            Codec = file.Codec,
+                            IsInterlaced = false
+                        };
+
                         var source = new MediaSourceInfo
                         {
                             Id = video.Id,
                             Path = preferredUrl,
                             Protocol = MediaProtocol.Http,
                             Container = preferredUrl.Contains(".m3u8") ? "hls" : "mp4",
-                            VideoType = VideoType.VideoFile,
                             SupportsDirectStream = true,
-                            SupportsDirectPlay = true,
-                            VideoStream = new MediaStream
-                            {
-                                Type = MediaStreamType.Video,
-                                Width = file.W,
-                                Height = file.H,
-                                Codec = file.Codec,
-                                IsInterlaced = false
-                            }
+                            SupportsDirectPlay = true
                         };
 
                         // Add audio streams
                         if (video.Audios != null && video.Audios.Count > 0)
                         {
                             source.MediaStreams = new List<MediaStream>();
-                            source.MediaStreams.Add(source.VideoStream);
+                            source.MediaStreams.Add(videoStream);
 
                             for (int i = 0; i < video.Audios.Count; i++)
                             {
@@ -802,7 +772,6 @@ namespace ServiceKP.Plugin.Channel
                         Path = channel.Stream,
                         Protocol = MediaProtocol.Http,
                         Container = channel.Stream.Contains(".m3u8") ? "hls" : "mp4",
-                        VideoType = VideoType.VideoFile,
                         SupportsDirectStream = true,
                         SupportsDirectPlay = true,
                         IsInfiniteStream = true
@@ -985,10 +954,7 @@ namespace ServiceKP.Plugin.Channel
 
         public Task<DynamicImageResponse> GetChannelImage(ImageType type, CancellationToken cancellationToken)
         {
-            return Task.FromResult(new DynamicImageResponse
-            {
-                HasImage = false
-            });
+            return Task.FromResult(new DynamicImageResponse());
         }
 
         public IEnumerable<ImageType> GetSupportedChannelImages()
