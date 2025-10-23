@@ -4,13 +4,13 @@ using MediaBrowser.Controller.Entities.TV;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 
-namespace ServiceKP.Plugin.Providers
+namespace Kinopub.Plugin.Providers
 {
-    public class ServiceKPMovieExternalId : IExternalId
+    public class KinopubMovieExternalId : IExternalId
     {
-        public string Name => "ServiceKP";
+        public string Name => "Kinopub";
 
-        public string Key => "ServiceKP";
+        public string Key => "Kinopub";
 
         public string UrlFormatString => "https://service-kp.com/item/{0}";
 
@@ -20,11 +20,11 @@ namespace ServiceKP.Plugin.Providers
         }
     }
 
-    public class ServiceKPSeriesExternalId : IExternalId
+    public class KinopubSeriesExternalId : IExternalId
     {
-        public string Name => "ServiceKP";
+        public string Name => "Kinopub";
 
-        public string Key => "ServiceKP";
+        public string Key => "Kinopub";
 
         public string UrlFormatString => "https://service-kp.com/item/{0}";
 

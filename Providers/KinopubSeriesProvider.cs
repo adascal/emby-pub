@@ -10,19 +10,19 @@ using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Logging;
 using MediaBrowser.Model.Providers;
-using ServiceKP.Plugin.Api;
+using Kinopub.Plugin.Api;
 
-namespace ServiceKP.Plugin.Providers
+namespace Kinopub.Plugin.Providers
 {
-    public class ServiceKPSeriesProvider : IRemoteMetadataProvider<Series, SeriesInfo>, IHasOrder
+    public class KinopubSeriesProvider : IRemoteMetadataProvider<Series, SeriesInfo>, IHasOrder
     {
         private readonly IHttpClient _httpClient;
         private readonly ILogger _logger;
 
-        public string Name => "ServiceKP";
+        public string Name => "Kinopub";
         public int Order => 2;
 
-        public ServiceKPSeriesProvider(IHttpClient httpClient, ILogManager logManager)
+        public KinopubSeriesProvider(IHttpClient httpClient, ILogManager logManager)
         {
             _httpClient = httpClient;
             _logger = logManager.GetLogger(GetType().Name);
@@ -38,11 +38,11 @@ namespace ServiceKP.Plugin.Providers
 
             try
             {
-                // Try searching by ServiceKP ID first
-                var serviceKpId = searchInfo.GetProviderId("ServiceKP");
-                if (!string.IsNullOrEmpty(serviceKpId))
+                // Try searching by Kinopub ID first
+                var kinopubId = searchInfo.GetProviderId("Kinopub");
+                if (!string.IsNullOrEmpty(kinopubId))
                 {
-                    var itemResponse = await apiClient.GetItemMediaAsync(serviceKpId, cancellationToken);
+                    var itemResponse = await apiClient.GetItemMediaAsync(kinopubId, cancellationToken);
                     if (itemResponse?.Item != null)
                     {
                         return new[] { ConvertToSearchResult(itemResponse.Item) };
@@ -81,8 +81,8 @@ namespace ServiceKP.Plugin.Providers
 
             try
             {
-                var serviceKpId = info.GetProviderId("ServiceKP");
-                if (string.IsNullOrEmpty(serviceKpId))
+                var kinopubId = info.GetProviderId("Kinopub");
+                if (string.IsNullOrEmpty(kinopubId))
                 {
                     // Try to find by search
                     var searchResults = await GetSearchResults(info, cancellationToken);
@@ -90,16 +90,16 @@ namespace ServiceKP.Plugin.Providers
 
                     if (firstResult != null)
                     {
-                        serviceKpId = firstResult.GetProviderId("ServiceKP");
+                        kinopubId = firstResult.GetProviderId("Kinopub");
                     }
                 }
 
-                if (string.IsNullOrEmpty(serviceKpId))
+                if (string.IsNullOrEmpty(kinopubId))
                 {
                     return result;
                 }
 
-                var itemResponse = await apiClient.GetItemMediaAsync(serviceKpId, cancellationToken);
+                var itemResponse = await apiClient.GetItemMediaAsync(kinopubId, cancellationToken);
                 var item = itemResponse?.Item;
 
                 if (item == null)
@@ -120,7 +120,7 @@ namespace ServiceKP.Plugin.Providers
                 };
 
                 // Add provider IDs
-                series.SetProviderId("ServiceKP", item.Id);
+                series.SetProviderId("Kinopub", item.Id);
                 if (item.Imdb > 0)
                 {
                     series.SetProviderId(MetadataProviders.Imdb, $"tt{item.Imdb:D7}");
@@ -187,7 +187,7 @@ namespace ServiceKP.Plugin.Providers
                 ImageUrl = item.Posters?.Big
             };
 
-            result.SetProviderId("ServiceKP", item.Id);
+            result.SetProviderId("Kinopub", item.Id);
             if (item.Imdb > 0)
             {
                 result.SetProviderId(MetadataProviders.Imdb, $"tt{item.Imdb:D7}");

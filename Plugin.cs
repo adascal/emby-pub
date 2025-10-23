@@ -8,17 +8,17 @@ using MediaBrowser.Common.Plugins;
 using MediaBrowser.Model.Logging;
 using MediaBrowser.Model.Plugins;
 using MediaBrowser.Model.Serialization;
-using ServiceKP.Plugin.Api;
-using ServiceKP.Plugin.Configuration;
-using ServiceKP.Plugin.Models;
+using Kinopub.Plugin.Api;
+using Kinopub.Plugin.Configuration;
+using Kinopub.Plugin.Models;
 
-namespace ServiceKP.Plugin
+namespace Kinopub.Plugin
 {
     public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
     {
         private readonly IHttpClient _httpClient;
         private readonly ILogger _logger;
-        private ServiceKPApiClient? _apiClient;
+        private KinopubApiClient? _apiClient;
 
         public Plugin(IApplicationPaths applicationPaths, IXmlSerializer xmlSerializer, IHttpClient httpClient, ILogManager logManager)
             : base(applicationPaths, xmlSerializer)
@@ -27,22 +27,22 @@ namespace ServiceKP.Plugin
             _logger = logManager.GetLogger(Name);
             Instance = this;
 
-            _logger.Info("ServiceKP Plugin initialized");
+            _logger.Info("Kinopub Plugin initialized");
         }
 
         public static Plugin? Instance { get; private set; }
 
-        public override string Name => "ServiceKP";
+        public override string Name => "Kinopub";
 
-        public override string Description => "Stream movies and TV shows from ServiceKP";
+        public override string Description => "Stream movies and TV shows from Kinopub";
 
         public override Guid Id => Guid.Parse("12345678-1234-1234-1234-123456789abc");
 
-        public ServiceKPApiClient GetApiClient()
+        public KinopubApiClient GetApiClient()
         {
             if (_apiClient == null)
             {
-                _apiClient = new ServiceKPApiClient(
+                _apiClient = new KinopubApiClient(
                     _httpClient,
                     _logger,
                     Configuration.ApiBaseUrl,

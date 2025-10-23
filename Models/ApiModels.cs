@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace ServiceKP.Plugin.Models
+namespace Kinopub.Plugin.Models
 {
     public class ApiResponse
     {

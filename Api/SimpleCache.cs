@@ -2,7 +2,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Threading.Tasks;
 
-namespace ServiceKP.Plugin.Api
+namespace Kinopub.Plugin.Api
 {
     public class SimpleCache
     {

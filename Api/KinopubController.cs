@@ -5,24 +5,24 @@ using System.Threading.Tasks;
 using MediaBrowser.Model.Logging;
 using MediaBrowser.Model.Services;
 
-namespace ServiceKP.Plugin.Api
+namespace Kinopub.Plugin.Api
 {
-    [Route("/ServiceKP/Authenticate", "GET", Summary = "Authenticate with ServiceKP")]
+    [Route("/Kinopub/Authenticate", "GET", Summary = "Authenticate with Kinopub")]
     public class AuthenticateRequest : IReturn<AuthenticateResponse>
     {
     }
 
-    [Route("/ServiceKP/ClearAuth", "GET", Summary = "Clear ServiceKP authentication")]
+    [Route("/Kinopub/ClearAuth", "GET", Summary = "Clear Kinopub authentication")]
     public class ClearAuthRequest : IReturn<ClearAuthResponse>
     {
     }
 
-    [Route("/ServiceKP/Devices", "GET", Summary = "Get list of linked devices")]
+    [Route("/Kinopub/Devices", "GET", Summary = "Get list of linked devices")]
     public class GetDevicesRequest : IReturn<GetDevicesResponse>
     {
     }
 
-    [Route("/ServiceKP/Device/{Id}/Remove", "POST", Summary = "Remove a device")]
+    [Route("/Kinopub/Device/{Id}/Remove", "POST", Summary = "Remove a device")]
     public class RemoveDeviceRequest : IReturn<RemoveDeviceResponse>
     {
         public string Id { get; set; } = string.Empty;
@@ -67,11 +67,11 @@ namespace ServiceKP.Plugin.Api
         public bool IsCurrent { get; set; }
     }
 
-    public class ServiceKPController : IService
+    public class KinopubController : IService
     {
         private readonly ILogger _logger;
 
-        public ServiceKPController(ILogManager logManager)
+        public KinopubController(ILogManager logManager)
         {
             _logger = logManager.GetLogger(GetType().Name);
         }
@@ -99,7 +99,7 @@ namespace ServiceKP.Plugin.Api
                         userCode = code;
                         verificationUri = uri;
                         _logger.Info($"===========================================");
-                        _logger.Info($"ServiceKP Authentication Required");
+                        _logger.Info($"Kinopub Authentication Required");
                         _logger.Info($"===========================================");
                         _logger.Info($"Please visit: {uri}");
                         _logger.Info($"Enter code: {code}");
@@ -115,12 +115,12 @@ namespace ServiceKP.Plugin.Api
                 if (authenticated)
                 {
                     response.Message = "Authentication successful";
-                    _logger.Info("ServiceKP authentication completed successfully");
+                    _logger.Info("Kinopub authentication completed successfully");
                 }
                 else
                 {
                     response.Message = "Authentication failed or timed out";
-                    _logger.Warn("ServiceKP authentication failed");
+                    _logger.Warn("Kinopub authentication failed");
                 }
             }
             catch (Exception ex)
@@ -139,7 +139,7 @@ namespace ServiceKP.Plugin.Api
             if (plugin != null)
             {
                 plugin.ClearAuthentication();
-                _logger.Info("ServiceKP authentication cleared");
+                _logger.Info("Kinopub authentication cleared");
             }
 
             return new ClearAuthResponse { Success = true };

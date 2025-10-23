@@ -1,7 +1,7 @@
 using System;
 using MediaBrowser.Model.Plugins;
 
-namespace ServiceKP.Plugin.Configuration
+namespace Kinopub.Plugin.Configuration
 {
     public class PluginConfiguration : BasePluginConfiguration
     {
@@ -16,5 +16,13 @@ namespace ServiceKP.Plugin.Configuration
         public bool EnableAdultContent { get; set; } = false;
         public int DefaultItemsPerPage { get; set; } = 20;
         public string PreferredStreamingType { get; set; } = "http"; // http, hls, hls2, hls4
+
+        // Library Sync Configuration
+        public string? LibraryPath { get; set; }
+        public string? ServerUrl { get; set; }
+        public bool EnableLibrarySync { get; set; } = false;
+        public bool SyncBookmarks { get; set; } = true;
+        public bool SyncCollections { get; set; } = false;
+        public bool SyncContinueWatching { get; set; } = true;
     }
 }

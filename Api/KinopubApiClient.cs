@@ -10,9 +10,9 @@ using System.Threading.Tasks;
 using System.Web;
 using MediaBrowser.Common.Net;
 using MediaBrowser.Model.Logging;
-using ServiceKP.Plugin.Models;
+using Kinopub.Plugin.Models;
 
-namespace ServiceKP.Plugin.Api
+namespace Kinopub.Plugin.Api
 {
     public class SnakeCaseNamingPolicy : JsonNamingPolicy
     {
@@ -41,7 +41,7 @@ namespace ServiceKP.Plugin.Api
         }
     }
 
-    public class ServiceKPApiClient
+    public class KinopubApiClient
     {
         private readonly IHttpClient _httpClient;
         private readonly ILogger _logger;
@@ -63,7 +63,7 @@ namespace ServiceKP.Plugin.Api
             PropertyNameCaseInsensitive = true
         };
 
-        public ServiceKPApiClient(IHttpClient httpClient, ILogger logger, string baseUrl, string clientId, string clientSecret)
+        public KinopubApiClient(IHttpClient httpClient, ILogger logger, string baseUrl, string clientId, string clientSecret)
         {
             _httpClient = httpClient;
             _logger = logger;

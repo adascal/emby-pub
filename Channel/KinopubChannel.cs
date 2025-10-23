@@ -11,23 +11,23 @@ using MediaBrowser.Model.Dto;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Logging;
 using MediaBrowser.Model.MediaInfo;
-using ServiceKP.Plugin.Api;
-using ServiceKP.Plugin.Models;
+using Kinopub.Plugin.Api;
+using Kinopub.Plugin.Models;
 
-namespace ServiceKP.Plugin.Channel
+namespace Kinopub.Plugin.Channel
 {
-    public class ServiceKPChannel : IChannel, IHasCacheKey, ISupportsMediaProbe
+    public class KinopubChannel : IChannel, IHasCacheKey, ISupportsMediaProbe
     {
         private readonly ILogger _logger;
 
-        public ServiceKPChannel(ILogManager logManager)
+        public KinopubChannel(ILogManager logManager)
         {
             _logger = logManager.GetLogger(GetType().Name);
         }
 
-        public string Name => "ServiceKP";
+        public string Name => "Kinopub";
 
-        public string Description => "Stream movies and TV shows from ServiceKP";
+        public string Description => "Stream movies and TV shows from Kinopub";
 
         public string DataVersion => "1";
 
@@ -278,7 +278,7 @@ namespace ServiceKP.Plugin.Channel
             };
         }
 
-        private async Task<ChannelItemResult> GetContentTypes(ServiceKPApiClient apiClient, CancellationToken cancellationToken)
+        private async Task<ChannelItemResult> GetContentTypes(KinopubApiClient apiClient, CancellationToken cancellationToken)
         {
             var typesResponse = await apiClient.GetTypesAsync(cancellationToken);
 
@@ -345,7 +345,7 @@ namespace ServiceKP.Plugin.Channel
             });
         }
 
-        private async Task<ChannelItemResult> GetItemsByCategory(ServiceKPApiClient apiClient, string category, string typeId, InternalChannelItemQuery query, CancellationToken cancellationToken)
+        private async Task<ChannelItemResult> GetItemsByCategory(KinopubApiClient apiClient, string category, string typeId, InternalChannelItemQuery query, CancellationToken cancellationToken)
         {
             var page = (query.StartIndex ?? 0) / (query.Limit ?? 20) + 1;
             var perPage = query.Limit ?? 20;
@@ -394,7 +394,7 @@ namespace ServiceKP.Plugin.Channel
             };
         }
 
-        private async Task<ChannelItemResult> GetBookmarks(ServiceKPApiClient apiClient, CancellationToken cancellationToken)
+        private async Task<ChannelItemResult> GetBookmarks(KinopubApiClient apiClient, CancellationToken cancellationToken)
         {
             var response = await apiClient.GetBookmarksAsync(cancellationToken);
 
@@ -413,7 +413,7 @@ namespace ServiceKP.Plugin.Channel
             };
         }
 
-        private async Task<ChannelItemResult> GetBookmarkItems(ServiceKPApiClient apiClient, string bookmarkId, InternalChannelItemQuery query, CancellationToken cancellationToken)
+        private async Task<ChannelItemResult> GetBookmarkItems(KinopubApiClient apiClient, string bookmarkId, InternalChannelItemQuery query, CancellationToken cancellationToken)
         {
             var page = (query.StartIndex ?? 0) / (query.Limit ?? 20) + 1;
             var perPage = query.Limit ?? 20;
@@ -430,7 +430,7 @@ namespace ServiceKP.Plugin.Channel
         }
 
 
-        private async Task<ChannelItemResult> GetItemDetails(ServiceKPApiClient apiClient, string itemId, CancellationToken cancellationToken)
+        private async Task<ChannelItemResult> GetItemDetails(KinopubApiClient apiClient, string itemId, CancellationToken cancellationToken)
         {
             var response = await apiClient.GetItemMediaAsync(itemId, cancellationToken);
             var item = response.Item;
@@ -532,7 +532,7 @@ namespace ServiceKP.Plugin.Channel
             return channelItem;
         }
 
-        private ChannelItemInfo ConvertVideoToChannelItem(ServiceKP.Plugin.Models.Video video, ItemDetails parentItem)
+        private ChannelItemInfo ConvertVideoToChannelItem(Kinopub.Plugin.Models.Video video, ItemDetails parentItem)
         {
             var mediaSource = new List<MediaSourceInfo>();
 
@@ -644,7 +644,7 @@ namespace ServiceKP.Plugin.Channel
             return channelItem;
         }
 
-        private async Task<ChannelItemResult> GetSeasonEpisodes(ServiceKPApiClient apiClient, string itemId, string seasonId, CancellationToken cancellationToken)
+        private async Task<ChannelItemResult> GetSeasonEpisodes(KinopubApiClient apiClient, string itemId, string seasonId, CancellationToken cancellationToken)
         {
             var response = await apiClient.GetItemMediaAsync(itemId, cancellationToken);
             var item = response.Item;
@@ -674,7 +674,7 @@ namespace ServiceKP.Plugin.Channel
             };
         }
 
-        private async Task<ChannelItemResult> GetCollections(ServiceKPApiClient apiClient, InternalChannelItemQuery query, CancellationToken cancellationToken)
+        private async Task<ChannelItemResult> GetCollections(KinopubApiClient apiClient, InternalChannelItemQuery query, CancellationToken cancellationToken)
         {
             var page = (query.StartIndex ?? 0) / (query.Limit ?? 20) + 1;
             var perPage = query.Limit ?? 20;
@@ -697,7 +697,7 @@ namespace ServiceKP.Plugin.Channel
             };
         }
 
-        private async Task<ChannelItemResult> GetCollectionItems(ServiceKPApiClient apiClient, string collectionId, CancellationToken cancellationToken)
+        private async Task<ChannelItemResult> GetCollectionItems(KinopubApiClient apiClient, string collectionId, CancellationToken cancellationToken)
         {
             var response = await apiClient.GetCollectionItemsAsync(collectionId, cancellationToken);
 
@@ -710,7 +710,7 @@ namespace ServiceKP.Plugin.Channel
             };
         }
 
-        private async Task<ChannelItemResult> GetHistory(ServiceKPApiClient apiClient, InternalChannelItemQuery query, CancellationToken cancellationToken)
+        private async Task<ChannelItemResult> GetHistory(KinopubApiClient apiClient, InternalChannelItemQuery query, CancellationToken cancellationToken)
         {
             var page = (query.StartIndex ?? 0) / (query.Limit ?? 20) + 1;
             var perPage = query.Limit ?? 20;
@@ -731,7 +731,7 @@ namespace ServiceKP.Plugin.Channel
             };
         }
 
-        private async Task<ChannelItemResult> GetWatchingSerials(ServiceKPApiClient apiClient, CancellationToken cancellationToken)
+        private async Task<ChannelItemResult> GetWatchingSerials(KinopubApiClient apiClient, CancellationToken cancellationToken)
         {
             var response = await apiClient.GetWatchingSerialsAsync(cancellationToken);
 
@@ -752,7 +752,7 @@ namespace ServiceKP.Plugin.Channel
             };
         }
 
-        private async Task<ChannelItemResult> GetLiveTVChannels(ServiceKPApiClient apiClient, CancellationToken cancellationToken)
+        private async Task<ChannelItemResult> GetLiveTVChannels(KinopubApiClient apiClient, CancellationToken cancellationToken)
         {
             var response = await apiClient.GetChannelsAsync(cancellationToken);
 
@@ -786,7 +786,7 @@ namespace ServiceKP.Plugin.Channel
             };
         }
 
-        private async Task<ChannelItemResult> GetSimilarItems(ServiceKPApiClient apiClient, string itemId, CancellationToken cancellationToken)
+        private async Task<ChannelItemResult> GetSimilarItems(KinopubApiClient apiClient, string itemId, CancellationToken cancellationToken)
         {
             var response = await apiClient.GetSimilarItemsAsync(itemId, cancellationToken);
 
@@ -799,7 +799,7 @@ namespace ServiceKP.Plugin.Channel
             };
         }
 
-        private Task<ChannelItemResult> GetFilters(ServiceKPApiClient apiClient, string typeId, CancellationToken cancellationToken)
+        private Task<ChannelItemResult> GetFilters(KinopubApiClient apiClient, string typeId, CancellationToken cancellationToken)
         {
             var items = new List<ChannelItemInfo>
             {
@@ -833,7 +833,7 @@ namespace ServiceKP.Plugin.Channel
             });
         }
 
-        private async Task<ChannelItemResult> GetGenresList(ServiceKPApiClient apiClient, string typeId, CancellationToken cancellationToken)
+        private async Task<ChannelItemResult> GetGenresList(KinopubApiClient apiClient, string typeId, CancellationToken cancellationToken)
         {
             var response = await apiClient.GetGenresAsync(cancellationToken);
 
@@ -864,7 +864,7 @@ namespace ServiceKP.Plugin.Channel
             };
         }
 
-        private async Task<ChannelItemResult> GetCountriesList(ServiceKPApiClient apiClient, string typeId, CancellationToken cancellationToken)
+        private async Task<ChannelItemResult> GetCountriesList(KinopubApiClient apiClient, string typeId, CancellationToken cancellationToken)
         {
             var response = await apiClient.GetCountriesAsync(cancellationToken);
 
@@ -883,7 +883,7 @@ namespace ServiceKP.Plugin.Channel
             };
         }
 
-        private Task<ChannelItemResult> GetYearsList(ServiceKPApiClient apiClient, string typeId, CancellationToken cancellationToken)
+        private Task<ChannelItemResult> GetYearsList(KinopubApiClient apiClient, string typeId, CancellationToken cancellationToken)
         {
             // Generate a list of years from current year back to 1960
             var currentYear = DateTime.Now.Year;
@@ -904,7 +904,7 @@ namespace ServiceKP.Plugin.Channel
             });
         }
 
-        private async Task<ChannelItemResult> GetItemsByGenre(ServiceKPApiClient apiClient, string typeId, string genreId, InternalChannelItemQuery query, CancellationToken cancellationToken)
+        private async Task<ChannelItemResult> GetItemsByGenre(KinopubApiClient apiClient, string typeId, string genreId, InternalChannelItemQuery query, CancellationToken cancellationToken)
         {
             var page = (query.StartIndex ?? 0) / (query.Limit ?? 20) + 1;
             var perPage = query.Limit ?? 20;
@@ -920,7 +920,7 @@ namespace ServiceKP.Plugin.Channel
             };
         }
 
-        private async Task<ChannelItemResult> GetItemsByCountry(ServiceKPApiClient apiClient, string typeId, string countryId, InternalChannelItemQuery query, CancellationToken cancellationToken)
+        private async Task<ChannelItemResult> GetItemsByCountry(KinopubApiClient apiClient, string typeId, string countryId, InternalChannelItemQuery query, CancellationToken cancellationToken)
         {
             var page = (query.StartIndex ?? 0) / (query.Limit ?? 20) + 1;
             var perPage = query.Limit ?? 20;
@@ -936,7 +936,7 @@ namespace ServiceKP.Plugin.Channel
             };
         }
 
-        private async Task<ChannelItemResult> GetItemsByYear(ServiceKPApiClient apiClient, string typeId, string year, InternalChannelItemQuery query, CancellationToken cancellationToken)
+        private async Task<ChannelItemResult> GetItemsByYear(KinopubApiClient apiClient, string typeId, string year, InternalChannelItemQuery query, CancellationToken cancellationToken)
         {
             var page = (query.StartIndex ?? 0) / (query.Limit ?? 20) + 1;
             var perPage = query.Limit ?? 20;

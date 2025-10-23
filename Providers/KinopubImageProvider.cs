@@ -13,16 +13,16 @@ using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Logging;
 using MediaBrowser.Model.Providers;
 
-namespace ServiceKP.Plugin.Providers
+namespace Kinopub.Plugin.Providers
 {
-    public class ServiceKPImageProvider : IRemoteImageProvider
+    public class KinopubImageProvider : IRemoteImageProvider
     {
         private readonly IHttpClient _httpClient;
         private readonly ILogger _logger;
 
-        public string Name => "ServiceKP";
+        public string Name => "Kinopub";
 
-        public ServiceKPImageProvider(IHttpClient httpClient, ILogManager logManager)
+        public KinopubImageProvider(IHttpClient httpClient, ILogManager logManager)
         {
             _httpClient = httpClient;
             _logger = logManager.GetLogger(GetType().Name);
@@ -51,15 +51,15 @@ namespace ServiceKP.Plugin.Providers
                 return Enumerable.Empty<RemoteImageInfo>();
             }
 
-            var serviceKpId = item.GetProviderId("ServiceKP");
-            if (string.IsNullOrEmpty(serviceKpId))
+            var kinopubId = item.GetProviderId("Kinopub");
+            if (string.IsNullOrEmpty(kinopubId))
             {
                 return Enumerable.Empty<RemoteImageInfo>();
             }
 
             try
             {
-                var itemResponse = await apiClient.GetItemMediaAsync(serviceKpId, cancellationToken);
+                var itemResponse = await apiClient.GetItemMediaAsync(kinopubId, cancellationToken);
                 var apiItem = itemResponse?.Item;
 
                 if (apiItem?.Posters == null)
@@ -105,7 +105,7 @@ namespace ServiceKP.Plugin.Providers
             }
             catch (Exception ex)
             {
-                _logger.Error($"Error fetching images for item {serviceKpId}: {ex.Message}");
+                _logger.Error($"Error fetching images for item {kinopubId}: {ex.Message}");
                 return Enumerable.Empty<RemoteImageInfo>();
             }
         }
