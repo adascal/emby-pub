@@ -799,7 +799,7 @@ namespace ServiceKP.Plugin.Channel
             };
         }
 
-        private async Task<ChannelItemResult> GetFilters(ServiceKPApiClient apiClient, string typeId, CancellationToken cancellationToken)
+        private Task<ChannelItemResult> GetFilters(ServiceKPApiClient apiClient, string typeId, CancellationToken cancellationToken)
         {
             var items = new List<ChannelItemInfo>
             {
@@ -826,11 +826,11 @@ namespace ServiceKP.Plugin.Channel
                 }
             };
 
-            return new ChannelItemResult
+            return Task.FromResult(new ChannelItemResult
             {
                 Items = items,
                 TotalRecordCount = items.Count
-            };
+            });
         }
 
         private async Task<ChannelItemResult> GetGenresList(ServiceKPApiClient apiClient, string typeId, CancellationToken cancellationToken)
@@ -883,7 +883,7 @@ namespace ServiceKP.Plugin.Channel
             };
         }
 
-        private async Task<ChannelItemResult> GetYearsList(ServiceKPApiClient apiClient, string typeId, CancellationToken cancellationToken)
+        private Task<ChannelItemResult> GetYearsList(ServiceKPApiClient apiClient, string typeId, CancellationToken cancellationToken)
         {
             // Generate a list of years from current year back to 1960
             var currentYear = DateTime.Now.Year;
@@ -897,11 +897,11 @@ namespace ServiceKP.Plugin.Channel
                 ImageUrl = null
             }).ToList();
 
-            return new ChannelItemResult
+            return Task.FromResult(new ChannelItemResult
             {
                 Items = items,
                 TotalRecordCount = items.Count
-            };
+            });
         }
 
         private async Task<ChannelItemResult> GetItemsByGenre(ServiceKPApiClient apiClient, string typeId, string genreId, InternalChannelItemQuery query, CancellationToken cancellationToken)

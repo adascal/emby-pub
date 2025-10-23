@@ -104,7 +104,7 @@ namespace ServiceKP.Plugin
                     try
                     {
                         var tokensResponse = await apiClient.RefreshTokensAsync(Configuration.RefreshToken, cancellationToken);
-                        if (tokensResponse?.Error == null)
+                        if (tokensResponse?.Error == null && tokensResponse != null)
                         {
                             SaveTokens(tokensResponse);
                             return true;
