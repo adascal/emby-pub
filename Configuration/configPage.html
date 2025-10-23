@@ -3,24 +3,37 @@
 <head>
     <title>ServiceKP Plugin Configuration</title>
     <style>
+        /* Force dark background for modal and page */
+        html,
         body {
-            background-color: #101010;
-            color: #e0e0e0;
+            background-color: #101010 !important;
+            color: #e0e0e0 !important;
+        }
+
+        /* Modal backdrop */
+        .dialog,
+        .ui-page-theme-a,
+        .ui-overlay-a {
+            background-color: #101010 !important;
         }
 
         .pluginConfigurationPage {
-            background-color: #181818;
+            background-color: #181818 !important;
             padding: 2em;
             border-radius: 8px;
             margin: 1em;
         }
 
+        .page {
+            background-color: #181818 !important;
+        }
+
         .content-primary {
-            background-color: #181818;
+            background-color: #181818 !important;
         }
 
         .verticalSection {
-            background-color: #202020;
+            background-color: #202020 !important;
             padding: 1.5em;
             border-radius: 6px;
         }
@@ -57,6 +70,8 @@
             color: #e0e0e0 !important;
             padding: 0.5em !important;
             border-radius: 4px !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
         }
 
         input[type="text"]:focus,
@@ -69,6 +84,7 @@
 
         button {
             margin-right: 0.5em;
+            margin-bottom: 0.5em;
         }
 
         #authStatus {
@@ -76,6 +92,32 @@
             background-color: #2a2a2a;
             border-radius: 4px;
             border-left: 3px solid #00a4dc;
+            min-height: 50px;
+        }
+
+        #deviceCodeDisplay {
+            text-align: center;
+            padding: 1em;
+            background-color: #1a1a1a;
+            border-radius: 4px;
+            margin: 1em 0;
+        }
+
+        #deviceCodeDisplay .code {
+            font-size: 2em;
+            font-weight: bold;
+            letter-spacing: 0.3em;
+            color: #00a4dc;
+            margin: 0.5em 0;
+        }
+
+        #deviceCodeDisplay .url {
+            color: #00a4dc;
+            text-decoration: none;
+        }
+
+        #deviceCodeDisplay .url:hover {
+            text-decoration: underline;
         }
     </style>
 </head>
@@ -165,67 +207,193 @@
 
         <script type="text/javascript">
             var ServiceKPConfig = {
-                pluginUniqueId: '12345678-1234-1234-1234-123456789abc'
+                pluginUniqueId: '12345678-1234-1234-1234-123456789abc',
+                pollInterval: null,
+
+                loadConfiguration: function() {
+                    console.log('Loading ServiceKP configuration...');
+
+                    ApiClient.getPluginConfiguration(ServiceKPConfig.pluginUniqueId).then(function (config) {
+                        console.log('Configuration loaded:', config);
+
+                        var form = document.querySelector('.serviceKPConfigForm');
+
+                        // Set values with logging
+                        var apiUrlField = form.querySelector('#txtApiBaseUrl');
+                        var clientIdField = form.querySelector('#txtClientId');
+                        var clientSecretField = form.querySelector('#txtClientSecret');
+
+                        if (apiUrlField) apiUrlField.value = config.ApiBaseUrl || 'https://api.service-kp.com';
+                        if (clientIdField) clientIdField.value = config.ClientId || '';
+                        if (clientSecretField) clientSecretField.value = config.ClientSecret || '';
+
+                        form.querySelector('#selectStreamingType').value = config.PreferredStreamingType || 'hls';
+                        form.querySelector('#txtDefaultItemsPerPage').value = config.DefaultItemsPerPage || 20;
+                        form.querySelector('#chkEnableAdultContent').checked = config.EnableAdultContent || false;
+
+                        ServiceKPConfig.updateAuthStatus(config);
+                    }).catch(function(err) {
+                        console.error('Error loading configuration:', err);
+                    });
+                },
+
+                updateAuthStatus: function(config) {
+                    var statusDiv = document.querySelector('#authStatus');
+                    if (config.AccessToken && config.AccessToken.length > 0) {
+                        statusDiv.innerHTML = '<p style="color: #00ff00;">✓ Authenticated with ServiceKP</p>';
+                    } else {
+                        statusDiv.innerHTML = '<p style="color: #ff9900;">⚠ Not authenticated - Click "Authenticate" button</p>';
+                    }
+                },
+
+                startAuthentication: function() {
+                    var statusDiv = document.querySelector('#authStatus');
+                    var btnAuth = document.querySelector('#btnAuthenticate');
+
+                    btnAuth.disabled = true;
+                    statusDiv.innerHTML = '<p>⏳ Starting authentication...</p>';
+
+                    console.log('Calling ServiceKP/Authenticate endpoint...');
+
+                    ApiClient.getJSON(ApiClient.getUrl('ServiceKP/Authenticate')).then(function (result) {
+                        console.log('Auth response:', result);
+
+                        if (result.Success && result.UserCode) {
+                            statusDiv.innerHTML =
+                                '<div id="deviceCodeDisplay">' +
+                                '<p>Visit this URL:</p>' +
+                                '<p><a href="' + result.VerificationUri + '" target="_blank" class="url">' + result.VerificationUri + '</a></p>' +
+                                '<p>Enter this code:</p>' +
+                                '<div class="code">' + result.UserCode + '</div>' +
+                                '<p style="color: #888;">Waiting for authorization...</p>' +
+                                '</div>';
+
+                            // Start polling for auth completion
+                            ServiceKPConfig.startPolling();
+                        } else {
+                            statusDiv.innerHTML = '<p style="color: red;">❌ ' + (result.Message || 'Authentication failed') + '</p>';
+                            btnAuth.disabled = false;
+                        }
+                    }).catch(function (err) {
+                        console.error('Authentication error:', err);
+                        statusDiv.innerHTML = '<p style="color: red;">❌ Error: ' + (err.message || err) + '</p>';
+                        btnAuth.disabled = false;
+                    });
+                },
+
+                startPolling: function() {
+                    console.log('Starting authentication polling...');
+
+                    if (ServiceKPConfig.pollInterval) {
+                        clearInterval(ServiceKPConfig.pollInterval);
+                    }
+
+                    ServiceKPConfig.pollInterval = setInterval(function() {
+                        ApiClient.getPluginConfiguration(ServiceKPConfig.pluginUniqueId).then(function(config) {
+                            if (config.AccessToken && config.AccessToken.length > 0) {
+                                console.log('Authentication completed!');
+                                clearInterval(ServiceKPConfig.pollInterval);
+                                ServiceKPConfig.pollInterval = null;
+
+                                var statusDiv = document.querySelector('#authStatus');
+                                statusDiv.innerHTML = '<p style="color: #00ff00;">✓ Authentication successful!</p>';
+
+                                document.querySelector('#btnAuthenticate').disabled = false;
+
+                                Dashboard.alert('Successfully authenticated with ServiceKP!');
+                            }
+                        });
+                    }, 3000); // Poll every 3 seconds
+                },
+
+                clearAuth: function() {
+                    if (!confirm('Are you sure you want to clear authentication?')) {
+                        return;
+                    }
+
+                    ApiClient.getJSON(ApiClient.getUrl('ServiceKP/ClearAuth')).then(function (result) {
+                        var statusDiv = document.querySelector('#authStatus');
+                        if (result.Success) {
+                            statusDiv.innerHTML = '<p style="color: #ff9900;">⚠ Authentication cleared</p>';
+                            Dashboard.alert('Authentication cleared successfully');
+                        } else {
+                            statusDiv.innerHTML = '<p style="color: red;">❌ Failed to clear authentication</p>';
+                        }
+                    }).catch(function(err) {
+                        console.error('Clear auth error:', err);
+                    });
+                },
+
+                saveConfiguration: function(form) {
+                    Dashboard.showLoadingMsg();
+
+                    ApiClient.getPluginConfiguration(ServiceKPConfig.pluginUniqueId).then(function (config) {
+                        config.ApiBaseUrl = form.querySelector('#txtApiBaseUrl').value;
+                        config.ClientId = form.querySelector('#txtClientId').value;
+                        config.ClientSecret = form.querySelector('#txtClientSecret').value;
+                        config.PreferredStreamingType = form.querySelector('#selectStreamingType').value;
+                        config.DefaultItemsPerPage = parseInt(form.querySelector('#txtDefaultItemsPerPage').value) || 20;
+                        config.EnableAdultContent = form.querySelector('#chkEnableAdultContent').checked;
+
+                        console.log('Saving configuration:', config);
+
+                        ApiClient.updatePluginConfiguration(ServiceKPConfig.pluginUniqueId, config).then(function (result) {
+                            Dashboard.hideLoadingMsg();
+                            Dashboard.processPluginConfigurationUpdateResult(result);
+                        }).catch(function(err) {
+                            Dashboard.hideLoadingMsg();
+                            console.error('Save error:', err);
+                            Dashboard.alert('Error saving configuration');
+                        });
+                    });
+                }
             };
 
-            document.querySelector('.serviceKPConfigForm').addEventListener('submit', function (e) {
-                e.preventDefault();
-                Dashboard.showLoadingMsg();
+            // Initialize when DOM is ready
+            document.addEventListener('DOMContentLoaded', function() {
+                console.log('ServiceKP config page loaded');
 
-                var form = this;
+                // Load configuration
+                ServiceKPConfig.loadConfiguration();
 
-                ApiClient.getPluginConfiguration(ServiceKPConfig.pluginUniqueId).then(function (config) {
-                    config.ApiBaseUrl = form.querySelector('#txtApiBaseUrl').value;
-                    config.ClientId = form.querySelector('#txtClientId').value;
-                    config.ClientSecret = form.querySelector('#txtClientSecret').value;
-                    config.PreferredStreamingType = form.querySelector('#selectStreamingType').value;
-                    config.DefaultItemsPerPage = parseInt(form.querySelector('#txtDefaultItemsPerPage').value);
-                    config.EnableAdultContent = form.querySelector('#chkEnableAdultContent').checked;
-
-                    ApiClient.updatePluginConfiguration(ServiceKPConfig.pluginUniqueId, config).then(function (result) {
-                        Dashboard.processPluginConfigurationUpdateResult(result);
-                    });
-                });
-
-                return false;
-            });
-
-            document.querySelector('#btnAuthenticate').addEventListener('click', function () {
-                var statusDiv = document.querySelector('#authStatus');
-                statusDiv.innerHTML = '<p>Please check the Emby server logs for authentication instructions...</p>';
-
-                ApiClient.getJSON(ApiClient.getUrl('ServiceKP/Authenticate')).then(function (result) {
-                    if (result.Success) {
-                        statusDiv.innerHTML = '<p style="color: green;">Authentication successful!</p>';
-                    } else {
-                        statusDiv.innerHTML = '<p style="color: red;">Authentication failed. Check logs for details.</p>';
-                    }
-                }).catch(function (err) {
-                    statusDiv.innerHTML = '<p style="color: red;">Error: ' + err.message + '</p>';
-                });
-            });
-
-            document.querySelector('#btnClearAuth').addEventListener('click', function () {
-                ApiClient.getJSON(ApiClient.getUrl('ServiceKP/ClearAuth')).then(function () {
-                    document.querySelector('#authStatus').innerHTML = '<p>Authentication cleared.</p>';
-                });
-            });
-
-            ApiClient.getPluginConfiguration(ServiceKPConfig.pluginUniqueId).then(function (config) {
+                // Setup form submit
                 var form = document.querySelector('.serviceKPConfigForm');
-                form.querySelector('#txtApiBaseUrl').value = config.ApiBaseUrl || '';
-                form.querySelector('#txtClientId').value = config.ClientId || '';
-                form.querySelector('#txtClientSecret').value = config.ClientSecret || '';
-                form.querySelector('#selectStreamingType').value = config.PreferredStreamingType || 'http';
-                form.querySelector('#txtDefaultItemsPerPage').value = config.DefaultItemsPerPage || 20;
-                form.querySelector('#chkEnableAdultContent').checked = config.EnableAdultContent || false;
+                if (form) {
+                    form.addEventListener('submit', function (e) {
+                        e.preventDefault();
+                        ServiceKPConfig.saveConfiguration(this);
+                        return false;
+                    });
+                }
 
-                if (config.AccessToken) {
-                    document.querySelector('#authStatus').innerHTML = '<p style="color: green;">Authenticated</p>';
-                } else {
-                    document.querySelector('#authStatus').innerHTML = '<p style="color: orange;">Not authenticated</p>';
+                // Setup auth button
+                var btnAuth = document.querySelector('#btnAuthenticate');
+                if (btnAuth) {
+                    btnAuth.addEventListener('click', function () {
+                        ServiceKPConfig.startAuthentication();
+                    });
+                }
+
+                // Setup clear auth button
+                var btnClearAuth = document.querySelector('#btnClearAuth');
+                if (btnClearAuth) {
+                    btnClearAuth.addEventListener('click', function () {
+                        ServiceKPConfig.clearAuth();
+                    });
                 }
             });
+
+            // Also try loading immediately in case DOMContentLoaded already fired
+            if (document.readyState === 'loading') {
+                // DOM still loading, wait for DOMContentLoaded
+            } else {
+                // DOM already loaded
+                setTimeout(function() {
+                    if (typeof ApiClient !== 'undefined') {
+                        ServiceKPConfig.loadConfiguration();
+                    }
+                }, 100);
+            }
         </script>
     </div>
 </body>
