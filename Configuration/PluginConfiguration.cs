@@ -24,5 +24,16 @@ namespace Kinopub.Plugin.Configuration
         public bool SyncBookmarks { get; set; } = true;
         public bool SyncCollections { get; set; } = false;
         public bool SyncContinueWatching { get; set; } = true;
+
+        // Performance Configuration
+        public int BatchSize { get; set; } = 50;
+        public int MaxConcurrentOperations { get; set; } = 4;
+        public int CacheExpirationHotMinutes { get; set; } = 60;
+        public int CacheExpirationWarmMinutes { get; set; } = 15;
+        public int CacheExpirationColdMinutes { get; set; } = 5;
+        public int MaxCacheEntries { get; set; } = 1000;
+        public bool EnableIncrementalSync { get; set; } = true;
+        public int IncrementalSyncThresholdHours { get; set; } = 24;
+        public bool EnableParallelProcessing { get; set; } = true;
     }
 }
