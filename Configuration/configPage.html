@@ -125,7 +125,7 @@
     <div data-role="page" class="page type-interior pluginConfigurationPage" data-require="emby-input,emby-button,emby-select,emby-checkbox">
         <div data-role="content">
             <div class="content-primary">
-                <form class="serviceKPConfigForm">
+                <form class="KinopubConfigForm">
                     <div class="verticalSection">
                         <h2>Kinopub Plugin Configuration</h2>
 
@@ -216,7 +216,7 @@
                     ApiClient.getPluginConfiguration(KinopubConfig.pluginUniqueId).then(function (config) {
                         console.log('Configuration loaded:', config);
 
-                        var form = document.querySelector('.serviceKPConfigForm');
+                        var form = document.querySelector('.KinopubConfigForm');
 
                         // Set values with logging
                         var apiUrlField = form.querySelector('#txtApiBaseUrl');
@@ -357,7 +357,7 @@
                 KinopubConfig.loadConfiguration();
 
                 // Setup form submit
-                var form = document.querySelector('.serviceKPConfigForm');
+                var form = document.querySelector('.KinopubConfigForm');
                 if (form) {
                     form.addEventListener('submit', function (e) {
                         e.preventDefault();

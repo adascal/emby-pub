@@ -67,7 +67,7 @@ namespace Kinopub.Plugin.Channel
 
         public string GetCacheKey(string userId)
         {
-            return $"servicekp_{DataVersion}";
+            return $"kinopub_{DataVersion}";
         }
 
         public async Task<ChannelItemResult> GetChannelItems(InternalChannelItemQuery query, CancellationToken cancellationToken)
