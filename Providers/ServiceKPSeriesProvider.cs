@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using MediaBrowser.Common.Net;
 using MediaBrowser.Controller.Entities.TV;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
@@ -14,13 +15,15 @@ namespace ServiceKP.Plugin.Providers
 {
     public class ServiceKPSeriesProvider : IRemoteMetadataProvider<Series, SeriesInfo>, IHasOrder
     {
+        private readonly IHttpClient _httpClient;
         private readonly ILogger _logger;
 
         public string Name => "ServiceKP";
         public int Order => 2;
 
-        public ServiceKPSeriesProvider(ILogManager logManager)
+        public ServiceKPSeriesProvider(IHttpClient httpClient, ILogManager logManager)
         {
+            _httpClient = httpClient;
             _logger = logManager.GetLogger(GetType().Name);
         }
 
@@ -194,7 +197,11 @@ namespace ServiceKP.Plugin.Providers
 
         public Task<HttpResponseInfo> GetImageResponse(string url, CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            return _httpClient.GetResponse(new HttpRequestOptions
+            {
+                Url = url,
+                CancellationToken = cancellationToken
+            });
         }
     }
 }

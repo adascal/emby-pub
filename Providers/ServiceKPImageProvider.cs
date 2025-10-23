@@ -42,7 +42,7 @@ namespace ServiceKP.Plugin.Providers
             };
         }
 
-        public async Task<IEnumerable<RemoteImageInfo>> GetImages(BaseItem item, CancellationToken cancellationToken)
+        public async Task<IEnumerable<RemoteImageInfo>> GetImages(BaseItem item, LibraryOptions libraryOptions, CancellationToken cancellationToken)
         {
             var apiClient = Plugin.Instance?.GetApiClient();
             if (apiClient == null)

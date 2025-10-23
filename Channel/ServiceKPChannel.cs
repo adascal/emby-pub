@@ -15,7 +15,7 @@ using ServiceKP.Plugin.Models;
 
 namespace ServiceKP.Plugin.Channel
 {
-    public class ServiceKPChannel : IChannel, IHasCacheKey, ISupportsLatestMedia, ISupportsMediaProbe
+    public class ServiceKPChannel : IChannel, IHasCacheKey, ISupportsMediaProbe
     {
         private readonly ILogger _logger;
 
@@ -998,11 +998,6 @@ namespace ServiceKP.Plugin.Channel
                 ImageType.Primary,
                 ImageType.Thumb
             };
-        }
-
-        public Task<IEnumerable<ChannelItemInfo>> GetLatestMedia(ChannelLatestMediaSearch request, CancellationToken cancellationToken)
-        {
-            return Task.FromResult<IEnumerable<ChannelItemInfo>>(new List<ChannelItemInfo>());
         }
     }
 }
